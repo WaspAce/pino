@@ -90,6 +90,7 @@ export class PinoGui {
     // private readonly client: BrowserClient,
     // private readonly host: BrowserHost
   ) {
+    // this.client.render_handler.add_draw_targets([this.view]);
     this.monitor = screen.get_monitor(0);
     this.create_form();
     this.create_view();

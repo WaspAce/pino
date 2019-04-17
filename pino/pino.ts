@@ -142,22 +142,6 @@ import { PinoOptions } from './options';
 //     //this.client.render_handler.on_paint = this.do_on_paint;
 //   }
 
-//   private create_browser() {
-//     let window_info = new WindowInfo();
-//     window_info.external_begin_frame_enabled = true;
-
-//     let settings = new BrowserSettings();
-//     settings.frame_rate = 60;
-
-//     this.browser = new Browser(
-//       window_info,
-//       this.client,
-//       'https://www.youtube.com/watch?v=vuT_bXzhqhY&play=true',
-//       settings
-//     );
-//     this.host = this.browser.get_host();
-//   }
-
 //   private init_browser() {
 //     this.init_screen();
 //     this.create_client();
@@ -174,6 +158,7 @@ import { PinoOptions } from './options';
 export class Pino {
   private screen_info: ScreenInfo;
   private client: BrowserClient;
+  private browser: Browser;
   private gui: PinoGui;
 
   private init_options() {
@@ -210,6 +195,9 @@ export class Pino {
     if (this.gui) {
       screen_point.x = view_point.x + this.gui.monitor.x;
       screen_point.y = view_point.y + this.gui.monitor.y;
+    } else {
+      screen_point.x = view_point.x;
+      screen_point.y = view_point.y;
     }
     return true;
   }
@@ -227,7 +215,19 @@ export class Pino {
     this.client.render_handler.view_rect.copy_from(this.options.view_rect);
     this.client.render_handler.screen_info = this.screen_info;
     this.client.render_handler.on_get_screen_point = this.do_on_get_screen_point;
-    this.client.render_handler.add_draw_targets([this.view]);
+  }
+
+  private create_browser() {
+    const window_info = new WindowInfo();
+    const settings = new BrowserSettings();
+    settings.frame_rate = this.options.frame_rate;
+
+    this.browser = new Browser(
+      window_info,
+      this.client,
+      this.options.default_url,
+      settings
+    );
   }
 
   private init_browser() {

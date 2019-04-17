@@ -4,4 +4,6 @@ export interface PinoOptions {
   aviable_rect?: Rect;
   screen_rect?: Rect;
   view_rect?: Rect;
+  frame_rate?: number;
+  default_url?: string;
 }
