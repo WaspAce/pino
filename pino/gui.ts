@@ -87,12 +87,12 @@ export class PinoGui {
   }
 
   constructor(
-    // private readonly client: BrowserClient,
-    // private readonly host: BrowserHost
+    private readonly client: BrowserClient,
+    private readonly host: BrowserHost
   ) {
-    // this.client.render_handler.add_draw_targets([this.view]);
     this.monitor = screen.get_monitor(0);
     this.create_form();
     this.create_view();
+    this.client.render_handler.add_draw_targets([this.view]);
   }
 }
