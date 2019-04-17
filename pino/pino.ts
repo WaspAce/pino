@@ -36,7 +36,6 @@ export class Pino {
     CEF_APP.init();
     CEF_APP.loop_interval_ms = this.options.loop_interval_ms;
     system.gui_loop_interval_ms = this.options.loop_interval_ms;
-    // CEF_APP.subprocess_source = './subprocess.js';
   }
 
   private init_screen() {
