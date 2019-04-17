@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "lint": "tslint -p tsconfig.json -c tslint.json",
-    "preale": "tsc",
-    "ale": "npx dotenv ./run.sh"
+    "pretest": "tsc",
+    "test": "npx dotenv ./test.sh"
   },
   "author": "Architector",
   "license": "ISC",
