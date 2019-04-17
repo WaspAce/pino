@@ -71,7 +71,6 @@ export class Pino {
     this.client.render_handler.root_screen_rect.y = 0;
     this.client.render_handler.root_screen_rect.width = 1920;
     this.client.render_handler.root_screen_rect.height = 1920;
-
     this.client.render_handler.view_rect = new Rect();
     this.client.render_handler.view_rect.copy_from(this.options.view_rect);
     this.client.render_handler.screen_info = this.screen_info;
@@ -109,11 +108,5 @@ export class Pino {
         this.browser.get_host()
       );
     }
-  }
-
-  async load(
-    url: string
-  ) {
-    console.log('load: ', url);
   }
 }

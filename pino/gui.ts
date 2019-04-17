@@ -94,5 +94,6 @@ export class PinoGui {
     this.create_form();
     this.create_view();
     this.client.render_handler.add_draw_targets([this.view]);
+    this.on_view_change_bounds(this.view.rect);
   }
 }
