@@ -1,0 +1,19 @@
+{
+  "name": "pino",
+  "version": "1.0.0",
+  "description": "WASPACE ALE browser framework",
+  "main": "index.js",
+  "scripts": {
+    "lint": "tslint -p tsconfig.json -c tslint.json",
+    "preale": "tsc",
+    "ale": "npx dotenv ./run.sh"
+  },
+  "author": "Architector",
+  "license": "ISC",
+  "dependencies": {
+    "ale_types": "git+https://github.com/WaspAce/ale_types.git",
+    "dotenv-cli": "^1.4.0",
+    "tslint": "^5.16.0",
+    "typescript": "^3.4.3"
+  }
+}
