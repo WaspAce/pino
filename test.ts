@@ -1,4 +1,4 @@
-import { Pino } from './index';
+import { Pino } from './src/index';
 
 const pino = new Pino({
   gui: true,
