@@ -11,8 +11,8 @@ export class PinoGui {
   private create_form() {
     this.form = new GuiForm(this);
     this.form.caption = 'Pino main form';
-    this.form.rect.width = 640;
-    this.form.rect.height = 480;
+    this.form.rect.width = 1920;
+    this.form.rect.height = 600;
     this.form.visible = true;
     this.form.on_close = this.do_on_form_close;
   }

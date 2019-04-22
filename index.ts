@@ -1,4 +1,3 @@
-import { PinoLoadError } from './load_error';
 import { PinoGui } from './gui';
 import { PinoOptions } from './options';
 
@@ -9,12 +8,11 @@ export class Pino {
   private browser: Browser;
   private gui: PinoGui;
 
-  private on_load_resolve: (value?: {} | PromiseLike<{}>) => void;
-  private on_load_reject: (reason?: any) => void;
-  private load_counter = 0;
-  private load_error: PinoLoadError;
-  private progress = 0;
-  private has_loading_error = false;
+  private on_js_ipc_resolve: (value?: ListValue | PromiseLike<ListValue>) => void;
+  private on_js_ipc_reject: (reason?: any) => void;
+
+  private on_dom_ready_resolve: (value?: {} | PromiseLike<{}>) => void;
+  private on_dom_ready_reject: (reason?: any) => void;
 
   private init_options(
     user_options: PinoOptions
@@ -40,6 +38,7 @@ export class Pino {
   }
 
   private init_app() {
+    CEF_APP.subprocess_source = './subprocess.js';
     CEF_APP.init();
     CEF_APP.loop_interval_ms = this.options.loop_interval_ms;
     system.gui_loop_interval_ms = this.options.loop_interval_ms;
@@ -83,72 +82,94 @@ export class Pino {
     this.client.render_handler.on_get_screen_point = this.do_on_get_screen_point;
   }
 
-  private do_on_loading_progress_change(
-    browser: Browser,
-    progress: number
-  ) {
-    this.progress = progress;
-  }
-
-  private create_display_handler() {
-    this.client.display_handler = new DisplayHandler(this);
-    this.client.display_handler.on_loading_progress_change = this.do_on_loading_progress_change;
-  }
-
-  private do_on_load_start(
-    browser: Browser,
-    frame: Frame,
-    transition_type: TransitionType
-  ) {
-    this.load_counter++;
-  }
-
   private do_on_load_end(
     browser: Browser,
     frame: Frame,
     http_code: number
   ) {
-    if (--this.load_counter <= 0 && (this.has_loading_error || this.progress === 1)) {
-      if (!this.load_error && this.on_load_resolve) {
-        const resolve = this.on_load_resolve;
-        this.on_load_resolve = undefined;
-        resolve();
-      } else if (this.load_error && this.on_load_reject) {
-        const reject = this.on_load_reject;
-        this.on_load_reject = undefined;
-        reject(this.load_error);
-      }
+    if (frame.is_main && (http_code > 299 || http_code === 0)) {
+      this.reject_dom_ready({
+        http_code
+      });
     }
-  }
-
-  private do_on_load_error(
-    browser: Browser,
-    frame: Frame,
-    code: CefErrorCode,
-    text: string,
-    failed_url: string
-  ) {
-    if (frame.is_main) {
-      this.load_error = {
-        code,
-        text
-      };
-    }
-    this.has_loading_error = true;
   }
 
   private create_load_handler() {
     this.client.load_handler = new LoadHandler(this);
-    this.client.load_handler.on_load_start = this.do_on_load_start;
     this.client.load_handler.on_load_end = this.do_on_load_end;
-    this.client.load_handler.on_load_error = this.do_on_load_error;
+  }
+
+  private do_on_process_message_received(
+    browser: Browser,
+    source_process: ProcessId,
+    message: ProcessMessage
+  ) {
+    if (message.name === 'dom_ready') {
+      if (this.on_dom_ready_resolve) {
+        const resolve = this.on_dom_ready_resolve;
+        this.on_dom_ready_resolve = undefined;
+        this.on_dom_ready_reject = undefined;
+        resolve();
+      }
+    } else {
+      if (this.on_js_ipc_resolve) {
+        const resolve = this.on_js_ipc_resolve;
+        this.on_js_ipc_resolve = undefined;
+        this.on_js_ipc_reject = undefined;
+        resolve(message.get_argument_list());
+      }
+    }
+  }
+
+  private reject_dom_ready(
+    reason?: any
+  ) {
+    this.on_dom_ready_resolve = undefined;
+    if (this.on_dom_ready_reject) {
+      const reject = this.on_dom_ready_reject;
+      this.on_dom_ready_reject = undefined;
+      reject(reason);
+    }
+  }
+
+  private reject_js_ipc(
+    reason?: any
+  ) {
+    this.on_js_ipc_resolve = undefined;
+    if (this.on_js_ipc_reject) {
+      const reject = this.on_js_ipc_reject;
+      this.on_js_ipc_reject = undefined;
+      reject(reason);
+    }
+  }
+
+  private reject_all_wait_promises(
+    reason?: any
+  ) {
+    this.reject_dom_ready(reason);
+    this.reject_js_ipc(reason);
+  }
+
+  private do_on_render_process_terminated(
+    browser: Browser,
+    status: TerminationStatus
+  ) {
+    this.reject_all_wait_promises({
+      termination_status: status
+    });
+  }
+
+  private create_request_handler() {
+    this.client.request_handler = new RequestHandler(this);
+    this.client.request_handler.on_render_process_terminated = this.do_on_render_process_terminated;
   }
 
   private create_client() {
-    this.client = new BrowserClient();
+    this.client = new BrowserClient(this);
     this.create_render_handler();
-    this.create_display_handler();
     this.create_load_handler();
+    this.create_request_handler();
+    this.client.on_process_message_received = this.do_on_process_message_received;
   }
 
   private create_browser() {
@@ -191,14 +212,50 @@ export class Pino {
   async load(
     url: string
   ) {
+    this.on_dom_ready_resolve = undefined;
+    this.on_dom_ready_reject = undefined;
     return new Promise((resolve, reject) => {
-      this.progress = 0;
-      this.on_load_resolve = resolve;
-      this.on_load_reject = reject;
-      this.load_counter = 0;
-      this.load_error = undefined;
-      this.has_loading_error = false;
+      if (this.browser.is_loading) {
+        this.browser.stop_load();
+      }
+      this.on_dom_ready_resolve = resolve;
+      this.on_dom_ready_reject = reject;
       this.browser.get_main_frame().load_url(url);
+    });
+  }
+
+  execute_js(
+    code: string
+  ) {
+    this.browser.get_main_frame().execute_java_script(
+      code,
+      'http://internal-script.wa',
+      0
+    );
+  }
+
+  async execute_js_and_wait_ipc(
+    code: string
+  ): Promise<ListValue> {
+    return new Promise<ListValue>((resolve, reject) => {
+      this.on_js_ipc_resolve = resolve;
+      this.on_js_ipc_reject = reject;
+      this.execute_js(code);
+    });
+  }
+
+  async execute_js_and_wait_dom_ready(
+    code: string
+  ) {
+    this.on_dom_ready_resolve = undefined;
+    this.on_dom_ready_reject = undefined;
+    return new Promise((resolve, reject) => {
+      if (this.browser.is_loading) {
+        this.browser.stop_load();
+      }
+      this.on_dom_ready_resolve = resolve;
+      this.on_dom_ready_reject = reject;
+      this.execute_js(code);
     });
   }
 }
