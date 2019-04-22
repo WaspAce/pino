@@ -2,7 +2,8 @@
   "name": "pino",
   "version": "1.0.0",
   "description": "WASPACE ALE browser framework",
-  "main": "index.js",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "scripts": {
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "pretest": "tsc",
