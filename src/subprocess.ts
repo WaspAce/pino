@@ -63,7 +63,12 @@ class Sub {
     args.forEach((arg, index) => {
       this.v8_value_to_list(arg, list, index);
     });
-    context.get_browser().send_process_message(ProcessId.PID_BROWSER, message);
+    if (context) {
+      const browser = context.get_browser();
+      if (browser) {
+        browser.send_process_message(ProcessId.PID_BROWSER, message);
+      }
+    }
   }
 
   private create_extension_handler() {
@@ -76,14 +81,11 @@ class Sub {
       frame: Frame,
       context: V8Context
   ) {
-      if (frame.is_main) {
-        frame.execute_java_script(
-          'document.addEventListener("DOMContentLoaded", function() {dom_ready()});',
-          'http://wascript.wa',
-          0
-        );
-      }
-      // console.log('SUBPROCESS:\t', 'context created: ');
+    frame.execute_java_script(
+      'document.addEventListener("DOMContentLoaded", function() {dom_ready()});',
+      'http://wascript.wa',
+      0
+    );
   }
 
   private create_extension() {

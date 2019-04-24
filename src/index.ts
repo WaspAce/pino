@@ -87,7 +87,7 @@ export class Pino {
     frame: Frame,
     http_code: number
   ) {
-    if (frame.is_main && (http_code > 299 || http_code === 0)) {
+    if (!browser.is_loading && (http_code > 299 || http_code === 0)) {
       this.reject_dom_ready({
         http_code
       });
@@ -105,7 +105,7 @@ export class Pino {
     message: ProcessMessage
   ) {
     if (message.name === 'dom_ready') {
-      if (this.on_dom_ready_resolve) {
+      if (browser.is_loading && this.on_dom_ready_resolve) {
         const resolve = this.on_dom_ready_resolve;
         this.on_dom_ready_resolve = undefined;
         this.on_dom_ready_reject = undefined;
