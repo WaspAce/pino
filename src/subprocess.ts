@@ -2,30 +2,7 @@ class Sub {
   private rph: RenderProcessHandler;
   private extension: V8Extension;
   private ext_handler: V8Handler;
-
-  // private do_on_web_kit_initialized() {
-  //   // console.log('SUBPROCESS:\t', 'webkit initialized');
-  // }
-
-  // private do_on_process_message_received (
-  //     browser: Browser,
-  //     source_process: ProcessId,
-  //     message: ProcessMessage
-  // ): boolean {
-  //   return true;
-  // }
-
-  // private do_on_browser_created(
-  //     browser: Browser
-  // ) {
-  //     // console.log('SUBPROCESS:\t', 'browser created');
-  // }
-
-  // private do_on_render_thread_created(
-  //     extra_info: ListValue
-  // ) {
-  //     // console.log('SUBPROCESS:\t', 'render thread created: ', extra_info.get_string(0));
-  // }
+  private init_scripts: string[] = [];
 
   private v8_value_to_list(
     value: V8Value,
@@ -81,6 +58,14 @@ class Sub {
       frame: Frame,
       context: V8Context
   ) {
+    this.init_scripts.forEach(script => {
+      frame.execute_java_script(
+        script,
+        'http://wascript.wa',
+        0
+      );
+    });
+
     frame.execute_java_script(
       'document.addEventListener("DOMContentLoaded", function() {dom_ready()});',
       'http://wascript.wa',
@@ -105,13 +90,27 @@ class Sub {
       this.extension.handler = this.ext_handler;
   }
 
+  private get_init_scripts(
+    extra_info: ListValue
+  ) {
+    if (extra_info && extra_info.size > 0) {
+      const list = extra_info.get_list(0);
+      for (let i = 0; i < list.size; i++) {
+        this.init_scripts.push(list.get_string(i));
+      }
+    }
+  }
+
+  private do_on_render_thread_created(
+    extra_info: ListValue
+  ) {
+    this.get_init_scripts(extra_info);
+  }
+
   constructor() {
       this.rph = new RenderProcessHandler(this);
       this.rph.on_context_created = this.do_on_context_created;
-      // this.rph.on_web_kit_initialized = this.do_on_web_kit_initialized;
-      // this.rph.on_process_message_received = this.do_on_process_message_received;
-      // this.rph.on_browser_created = this.do_on_browser_created;
-      // this.rph.on_render_thread_created = this.do_on_render_thread_created;
+      this.rph.on_render_thread_created = this.do_on_render_thread_created;
       this.create_extension();
       this.rph.v8_extension = this.extension;
 

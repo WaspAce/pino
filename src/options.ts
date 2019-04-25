@@ -5,4 +5,5 @@ export interface PinoOptions {
   screen_rect?: Rect;
   view_rect?: Rect;
   frame_rate?: number;
+  init_scripts?: string[];
 }

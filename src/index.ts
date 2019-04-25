@@ -7,6 +7,7 @@ export class Pino {
   private client: BrowserClient;
   private browser: Browser;
   private gui: PinoGui;
+  private init_scripts: string[] = [];
 
   private on_js_ipc_resolve: (value?: ListValue | PromiseLike<ListValue>) => void;
   private on_js_ipc_reject: (reason?: any) => void;
@@ -37,8 +38,24 @@ export class Pino {
     }
   }
 
+  private init_subprocess_info() {
+    const info = new ListValue();
+    const init_scripts = new ListValue();
+    if (this.options.init_scripts) {
+      init_scripts.set_size(this.options.init_scripts.length);
+      this.options.init_scripts.forEach((script, index) => {
+        init_scripts.set_string(index, script);
+      });
+    }
+    info.set_size(1);
+    info.set_list(0, init_scripts);
+    CEF_APP.subprocess_info = info;
+  }
+
   private init_app() {
     CEF_APP.subprocess_source = './subprocess.js';
+    this.init_subprocess_info();
+    console.log();
     CEF_APP.init();
     CEF_APP.loop_interval_ms = this.options.loop_interval_ms;
     system.gui_loop_interval_ms = this.options.loop_interval_ms;
