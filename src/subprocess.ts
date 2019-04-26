@@ -58,19 +58,19 @@ class Sub {
       frame: Frame,
       context: V8Context
   ) {
-    this.init_scripts.forEach(script => {
-      frame.execute_java_script(
-        script,
-        'http://wascript.wa',
-        0
-      );
-    });
+    // this.init_scripts.forEach(script => {
+    //   frame.execute_java_script(
+    //     script,
+    //     'http://wascript.wa',
+    //     0
+    //   );
+    // });
 
-    frame.execute_java_script(
-      'document.addEventListener("DOMContentLoaded", function() {dom_ready()});',
-      'http://wascript.wa',
-      0
-    );
+    // frame.execute_java_script(
+    //   'document.addEventListener("DOMContentLoaded", function() {dom_ready()});',
+    //   'http://wascript.wa',
+    //   0
+    // );
   }
 
   private create_extension() {
@@ -81,10 +81,18 @@ class Sub {
           native function transfer_data();
           return transfer_data(...arguments);
         };
-        var dom_ready = function() {
-          native function dom_ready();
-          return dom_ready();
+        var js_exception = function(e) {
+          native function js_exception();
+          return js_exception(JSON.stringify(e));
         };
+        var init_scripts_executed = function() {
+          native function init_scripts_executed();
+          return init_scripts_executed();
+        };
+        // var dom_ready = function() {
+        //   native function dom_ready();
+        //   return dom_ready();
+        // };
       `;
       this.create_extension_handler();
       this.extension.handler = this.ext_handler;
@@ -104,13 +112,13 @@ class Sub {
   private do_on_render_thread_created(
     extra_info: ListValue
   ) {
-    this.get_init_scripts(extra_info);
+    // this.get_init_scripts(extra_info);
   }
 
   constructor() {
       this.rph = new RenderProcessHandler(this);
       this.rph.on_context_created = this.do_on_context_created;
-      this.rph.on_render_thread_created = this.do_on_render_thread_created;
+      // this.rph.on_render_thread_created = this.do_on_render_thread_created;
       this.create_extension();
       this.rph.v8_extension = this.extension;
 

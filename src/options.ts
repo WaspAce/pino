@@ -6,4 +6,5 @@ export interface PinoOptions {
   view_rect?: Rect;
   frame_rate?: number;
   init_scripts?: string[];
+  main_frame_only?: boolean;
 }

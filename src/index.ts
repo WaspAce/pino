@@ -1,5 +1,6 @@
 import { PinoGui } from './gui';
 import { PinoOptions } from './options';
+import { logger } from './logger';
 
 export class Pino {
   private options: PinoOptions;
@@ -8,12 +9,16 @@ export class Pino {
   private browser: Browser;
   private gui: PinoGui;
   private init_scripts: string[] = [];
+  private init_scripts_executed = false;
 
   private on_js_ipc_resolve: (value?: ListValue | PromiseLike<ListValue>) => void;
   private on_js_ipc_reject: (reason?: any) => void;
 
-  private on_dom_ready_resolve: (value?: {} | PromiseLike<{}>) => void;
-  private on_dom_ready_reject: (reason?: any) => void;
+  private on_loaded_resolve: (value?: {} | PromiseLike<{}>) => void;
+  private on_loaded_reject: (reason?: any) => void;
+  private on_loaded_interval: number;
+
+  private on_execute_init_scripts: (value?: {} | PromiseLike<{}>) => void;
 
   private init_options(
     user_options: PinoOptions
@@ -39,23 +44,22 @@ export class Pino {
   }
 
   private init_subprocess_info() {
-    const info = new ListValue();
-    const init_scripts = new ListValue();
-    if (this.options.init_scripts) {
-      init_scripts.set_size(this.options.init_scripts.length);
-      this.options.init_scripts.forEach((script, index) => {
-        init_scripts.set_string(index, script);
-      });
-    }
-    info.set_size(1);
-    info.set_list(0, init_scripts);
-    CEF_APP.subprocess_info = info;
+    // const info = new ListValue();
+    // const init_scripts = new ListValue();
+    // if (this.options.init_scripts) {
+    //   init_scripts.set_size(this.options.init_scripts.length);
+    //   this.options.init_scripts.forEach((script, index) => {
+    //     init_scripts.set_string(index, script);
+    //   });
+    // }
+    // info.set_size(1);
+    // info.set_list(0, init_scripts);
+    // CEF_APP.subprocess_info = info;
   }
 
   private init_app() {
     CEF_APP.subprocess_source = './subprocess.js';
     this.init_subprocess_info();
-    console.log();
     CEF_APP.init();
     CEF_APP.loop_interval_ms = this.options.loop_interval_ms;
     system.gui_loop_interval_ms = this.options.loop_interval_ms;
@@ -99,21 +103,15 @@ export class Pino {
     this.client.render_handler.on_get_screen_point = this.do_on_get_screen_point;
   }
 
-  private do_on_load_end(
-    browser: Browser,
-    frame: Frame,
-    http_code: number
+  private process_data_transfer(
+    message: ProcessMessage
   ) {
-    if (!browser.is_loading && (http_code > 299 || http_code === 0)) {
-      this.reject_dom_ready({
-        http_code
-      });
+    if (this.on_js_ipc_resolve) {
+      const resolve = this.on_js_ipc_resolve;
+      this.on_js_ipc_resolve = undefined;
+      this.on_js_ipc_reject = undefined;
+      resolve(message.get_argument_list());
     }
-  }
-
-  private create_load_handler() {
-    this.client.load_handler = new LoadHandler(this);
-    this.client.load_handler.on_load_end = this.do_on_load_end;
   }
 
   private do_on_process_message_received(
@@ -121,30 +119,30 @@ export class Pino {
     source_process: ProcessId,
     message: ProcessMessage
   ) {
+    // logger.log('ipc rcvd: ', message.name);
     if (message.name === 'dom_ready') {
-      if (browser.is_loading && this.on_dom_ready_resolve) {
-        const resolve = this.on_dom_ready_resolve;
-        this.on_dom_ready_resolve = undefined;
-        this.on_dom_ready_reject = undefined;
+      // this.process_dom_ready();
+    } else if (message.name === 'init_scripts_executed') {
+      this.init_scripts_executed = true;
+      if (this.on_execute_init_scripts) {
+        const resolve = this.on_execute_init_scripts;
+        this.on_execute_init_scripts = undefined;
         resolve();
       }
+    } else if (message.name === 'js_exception') {
+      this.reject_js_ipc(message.get_argument_list().get_string(0));
     } else {
-      if (this.on_js_ipc_resolve) {
-        const resolve = this.on_js_ipc_resolve;
-        this.on_js_ipc_resolve = undefined;
-        this.on_js_ipc_reject = undefined;
-        resolve(message.get_argument_list());
-      }
+      this.process_data_transfer(message);
     }
   }
 
-  private reject_dom_ready(
+  private reject_loaded(
     reason?: any
   ) {
-    this.on_dom_ready_resolve = undefined;
-    if (this.on_dom_ready_reject) {
-      const reject = this.on_dom_ready_reject;
-      this.on_dom_ready_reject = undefined;
+    this.on_loaded_resolve = undefined;
+    if (this.on_loaded_reject) {
+      const reject = this.on_loaded_reject;
+      this.on_loaded_reject = undefined;
       reject(reason);
     }
   }
@@ -163,7 +161,7 @@ export class Pino {
   private reject_all_wait_promises(
     reason?: any
   ) {
-    this.reject_dom_ready(reason);
+    this.reject_loaded(reason);
     this.reject_js_ipc(reason);
   }
 
@@ -176,16 +174,56 @@ export class Pino {
     });
   }
 
+  private do_on_before_browse(
+    browser: Browser,
+    frame: Frame,
+    request: Request,
+    user_gesture: boolean,
+    is_redirect: boolean
+  ): boolean {
+    if (!frame.is_main && this.options.main_frame_only) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   private create_request_handler() {
     this.client.request_handler = new RequestHandler(this);
     this.client.request_handler.on_render_process_terminated = this.do_on_render_process_terminated;
+    this.client.request_handler.on_before_browse = this.do_on_before_browse;
+  }
+
+  private do_on_loading_progress_change(
+    browser: Browser,
+    progress: number
+  ) {
+    // console.log('PROGRESS: ', progress, ' IS LOADING: ', browser.is_loading);
+    if (progress === 1 && !browser.is_loading && this.on_loaded_resolve) {
+      if (this.on_loaded_interval) {
+        clearInterval(this.on_loaded_interval);
+        this.on_loaded_interval = undefined;
+      }
+      const resolve = this.on_loaded_resolve;
+      this.on_loaded_resolve = undefined;
+      this.on_loaded_reject = undefined;
+      this.init_scripts_executed = false;
+      this.on_execute_init_scripts = undefined;
+      // console.log('LOADED');
+      resolve();
+    }
+  }
+
+  private create_display_handler() {
+    this.client.display_handler = new DisplayHandler(this);
+    this.client.display_handler.on_loading_progress_change = this.do_on_loading_progress_change;
   }
 
   private create_client() {
     this.client = new BrowserClient(this);
     this.create_render_handler();
-    this.create_load_handler();
     this.create_request_handler();
+    this.create_display_handler();
     this.client.on_process_message_received = this.do_on_process_message_received;
   }
 
@@ -217,6 +255,36 @@ export class Pino {
     }
   }
 
+  private start_loading(
+    resolve,
+    reject
+  ) {
+    if (this.browser.is_loading) {
+      this.browser.stop_load();
+    }
+    this.init_scripts_executed = false;
+    this.on_execute_init_scripts = undefined;
+    this.on_loaded_resolve = resolve;
+    this.on_loaded_reject = reject;
+    // this.on_loaded_interval = setInterval(_ => {
+    //   this.maybe_loaded();
+    // }, 5000);
+  }
+
+  private async execute_init_scripts() {
+    if (!this.init_scripts_executed) {
+      let merged = '';
+      this.init_scripts.forEach(script => {
+        merged += script + '\n';
+      });
+      merged += 'init_scripts_executed();';
+      return new Promise(resolve => {
+        this.on_execute_init_scripts = resolve;
+        this.execute_js(merged);
+      });
+    }
+  }
+
   constructor(
     options?: PinoOptions
   ) {
@@ -229,14 +297,13 @@ export class Pino {
   async load(
     url: string
   ) {
-    this.on_dom_ready_resolve = undefined;
-    this.on_dom_ready_reject = undefined;
+    this.on_loaded_resolve = undefined;
+    this.on_loaded_reject = undefined;
     return new Promise((resolve, reject) => {
       if (this.browser.is_loading) {
         this.browser.stop_load();
       }
-      this.on_dom_ready_resolve = resolve;
-      this.on_dom_ready_reject = reject;
+      this.start_loading(resolve, reject);
       this.browser.get_main_frame().load_url(url);
     });
   }
@@ -254,24 +321,28 @@ export class Pino {
   async execute_js_and_wait_ipc(
     code: string
   ): Promise<ListValue> {
+    await this.execute_init_scripts();
     return new Promise<ListValue>((resolve, reject) => {
       this.on_js_ipc_resolve = resolve;
       this.on_js_ipc_reject = reject;
-      this.execute_js(code);
+      const try_code = `
+        try {
+          ${code}
+        } catch(e) {
+          js_exception(e);
+        }
+      `;
+      this.execute_js(try_code);
     });
   }
 
   async execute_js_and_wait_dom_ready(
     code: string
   ) {
-    this.on_dom_ready_resolve = undefined;
-    this.on_dom_ready_reject = undefined;
+    this.on_loaded_resolve = undefined;
+    this.on_loaded_reject = undefined;
     return new Promise((resolve, reject) => {
-      if (this.browser.is_loading) {
-        this.browser.stop_load();
-      }
-      this.on_dom_ready_resolve = resolve;
-      this.on_dom_ready_reject = reject;
+      this.start_loading(resolve, reject);
       this.execute_js(code);
     });
   }
