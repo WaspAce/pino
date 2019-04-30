@@ -3,7 +3,8 @@ import { PinoOptions } from './options';
 import { logger } from './logger';
 
 export class Pino {
-  private options: PinoOptions;
+  public options: PinoOptions;
+
   private screen_info: ScreenInfo;
   private client: BrowserClient;
   private browser: Browser;
@@ -34,7 +35,8 @@ export class Pino {
       aviable_rect: default_rect,
       screen_rect: default_rect,
       view_rect: default_rect,
-      frame_rate: 60
+      frame_rate: 60,
+      user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
     };
     if (!user_options) {
       this.options = default_options;
@@ -60,6 +62,7 @@ export class Pino {
   private init_app() {
     CEF_APP.subprocess_source = './subprocess.js';
     this.init_subprocess_info();
+    CEF_APP.settings.user_agent = this.options.user_agent;
     CEF_APP.init();
     CEF_APP.loop_interval_ms = this.options.loop_interval_ms;
     system.gui_loop_interval_ms = this.options.loop_interval_ms;
