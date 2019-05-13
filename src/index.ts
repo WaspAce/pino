@@ -36,7 +36,8 @@ export class Pino {
       screen_rect: default_rect,
       view_rect: default_rect,
       frame_rate: 60,
-      user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
+      user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36',
+      load_timeout_ms: 30000
     };
     if (!user_options) {
       this.options = default_options;
@@ -197,12 +198,8 @@ export class Pino {
     this.client.request_handler.on_before_browse = this.do_on_before_browse;
   }
 
-  private do_on_loading_progress_change(
-    browser: Browser,
-    progress: number
-  ) {
-    // console.log('PROGRESS: ', progress, ' IS LOADING: ', browser.is_loading);
-    if (progress === 1 && !browser.is_loading && this.on_loaded_resolve) {
+  private resolve_loaded() {
+    if (this.on_loaded_resolve) {
       if (this.on_loaded_interval) {
         clearInterval(this.on_loaded_interval);
         this.on_loaded_interval = undefined;
@@ -212,8 +209,16 @@ export class Pino {
       this.on_loaded_reject = undefined;
       this.init_scripts_executed = false;
       this.on_execute_init_scripts = undefined;
-      // console.log('LOADED');
       resolve();
+    }
+  }
+
+  private do_on_loading_progress_change(
+    browser: Browser,
+    progress: number
+  ) {
+    if (progress === 1 && !browser.is_loading) {
+      this.resolve_loaded();
     }
   }
 
@@ -269,9 +274,10 @@ export class Pino {
     this.on_execute_init_scripts = undefined;
     this.on_loaded_resolve = resolve;
     this.on_loaded_reject = reject;
-    // this.on_loaded_interval = setInterval(_ => {
-    //   this.maybe_loaded();
-    // }, 5000);
+    this.on_loaded_interval = setInterval(_ => {
+      console.log('loaded by timeout');
+      this.resolve_loaded();
+    }, this.options.load_timeout_ms);
   }
 
   private async execute_init_scripts() {
