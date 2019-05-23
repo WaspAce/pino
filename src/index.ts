@@ -275,7 +275,6 @@ export class Pino {
     this.on_loaded_resolve = resolve;
     this.on_loaded_reject = reject;
     this.on_loaded_interval = setInterval(_ => {
-      console.log('loaded by timeout');
       this.resolve_loaded();
     }, this.options.load_timeout_ms);
   }
