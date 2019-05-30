@@ -44,6 +44,9 @@ export class Pino {
     } else {
       this.options = Object.assign(default_options, user_options);
     }
+    if (this.options.init_scripts && this.options.init_scripts.length > 0) {
+      this.init_scripts = this.options.init_scripts;
+    }
   }
 
   private init_subprocess_info() {
@@ -227,11 +230,27 @@ export class Pino {
     this.client.display_handler.on_loading_progress_change = this.do_on_loading_progress_change;
   }
 
+  private do_on_load_error(
+    browser: Browser,
+    frame: Frame,
+    error_code: CefErrorCode,
+    error_text: string,
+    failed_url: string
+  ) {
+    this.reject_loaded(error_text);
+  }
+
+  private create_load_handler() {
+    this.client.load_handler = new LoadHandler(this);
+    this.client.load_handler.on_load_error = this.do_on_load_error;
+  }
+
   private create_client() {
     this.client = new BrowserClient(this);
     this.create_render_handler();
     this.create_request_handler();
     this.create_display_handler();
+    this.create_load_handler();
     this.client.on_process_message_received = this.do_on_process_message_received;
   }
 
