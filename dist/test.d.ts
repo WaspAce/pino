@@ -1,3 +1,3 @@
-import { Pino } from './src/index';
+import { Pino } from './src/pino';
 declare const pino: Pino;
-export { pino };
+export default pino;

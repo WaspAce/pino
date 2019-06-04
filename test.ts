@@ -1,18 +1,24 @@
-import { Pino } from './src/index';
+import { Pino } from './src/pino';
+
+CEF_APP.init();
+CEF_APP.loop_interval_ms = 5;
+system.gui_loop_interval_ms = 5;
 
 const pino = new Pino({
-  gui: true,
-  loop_interval_ms: 5,
-  load_timeout_ms: 10000
-});
+  gui: true
+}, true);
 
-pino.load('sdkjfhkdsjfhkjdsfkjdsfhsdfdsf')
-  .catch((reason) => {
-    pino.load('youtube.com').then(() => {
-      pino.load('google.ru').then(() => {
-        console.log('load promise TRUE');
-      });
+pino.wait_initialized().then(() => {
+  console.log('initialized');
+  pino.load('dfdslsdfdsfdsfdsfdsfsdfdsfdsfkfjdfdslfjdslkfjkfl.ru').then(() => {
+    console.log('err loaded');
+    pino.load('yandex.ru').then(() => {
+      console.log('yandex loaded');
+      pino.load('youtube.com').then(() => {
+        console.log('youtube loaded');
+      })
     });
   });
+});
 
-export { pino };
+export default pino;

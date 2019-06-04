@@ -1,27 +1,22 @@
+import { IPino } from './../pino_types';
 export class PinoGui {
+  view: GuiPanel;
+
   private form: GuiForm;
-  private view: GuiPanel;
-
-  public monitor: Monitor;
-
-  private do_on_form_close() {
-    system.exit(0, 'Main form closed');
-  }
 
   private create_form() {
     this.form = new GuiForm(this);
-    this.form.caption = 'Pino main form';
-    this.form.rect.width = 1920;
-    this.form.rect.height = 600;
+    const rect = screen.get_monitor(0).workarea_rect;
+    this.form.caption = 'Pino browser';
+    this.form.rect.width = rect.width;
+    this.form.rect.height = rect.height;
     this.form.visible = true;
-    this.form.on_close = this.do_on_form_close;
   }
 
   private on_view_change_bounds(
     rect: Rect
   ) {
-    this.client.render_handler.view_rect.copy_from(rect);
-    this.host.was_resized();
+    this.pino.on_view_resized(rect);
   }
 
   private do_on_view_mouse_wheel(
@@ -34,7 +29,7 @@ export class PinoGui {
     event.modifiers = modifiers;
     event.x = x;
     event.y = y;
-    this.host.send_mouse_wheel_event(event, 0, delta);
+    this.pino.send_mouse_wheel_event(event, delta);
   }
 
   private do_on_mouse_down(
@@ -47,7 +42,7 @@ export class PinoGui {
     event.modifiers = modifiers;
     event.x = x;
     event.y = y;
-    this.host.send_mouse_click_event(event, button_type, false, 1);
+    this.pino.send_mouse_down_event(event, button_type);
   }
 
   private do_on_mouse_up(
@@ -60,7 +55,7 @@ export class PinoGui {
     event.modifiers = modifiers;
     event.x = x;
     event.y = y;
-    this.host.send_mouse_click_event(event, button_type, true, 1);
+    this.pino.send_mouse_up_event(event, button_type);
   }
 
   private do_on_mouse_move(
@@ -72,7 +67,39 @@ export class PinoGui {
     event.modifiers = modifiers;
     event.x = x;
     event.y = y;
-    this.host.send_mouse_move_event(event, false);
+    this.pino.send_mouse_move_event(event);
+  }
+
+  private do_on_key_press(
+    char: string
+  ) {
+    const event = new KeyEvent();
+    event.event_type = KeyEventType.KEYEVENT_CHAR;
+    event.character = char;
+    event.windows_key_code = char.charCodeAt(0);
+    this.pino.send_key_press(event);
+  }
+
+  private do_on_key_down(
+    key_code: number,
+    modifiers: EventFlags[]
+  ) {
+    const event = new KeyEvent();
+    event.event_type = KeyEventType.KEYEVENT_RAWKEYDOWN;
+    event.windows_key_code = key_code;
+    event.modifiers = modifiers;
+    this.pino.send_key_down(event);
+  }
+
+  private do_on_key_up(
+    key_code: number,
+    modifiers: EventFlags[]
+  ) {
+    const event = new KeyEvent();
+    event.event_type = KeyEventType.KEYEVENT_RAWKEYDOWN;
+    event.windows_key_code = key_code;
+    event.modifiers = modifiers;
+    this.pino.send_key_up(event);
   }
 
   private create_view() {
@@ -84,16 +111,16 @@ export class PinoGui {
     this.view.on_mouse_down = this.do_on_mouse_down;
     this.view.on_mouse_up = this.do_on_mouse_up;
     this.view.on_mouse_move = this.do_on_mouse_move;
+    this.view.on_key_press = this.do_on_key_press;
+    this.view.on_key_down = this.do_on_key_down;
+    this.view.on_key_up = this.do_on_key_up;
   }
 
   constructor(
-    private readonly client: BrowserClient,
-    private readonly host: BrowserHost
+    private readonly pino: IPino
   ) {
-    this.monitor = screen.get_monitor(0);
     this.create_form();
     this.create_view();
-    this.client.render_handler.add_draw_targets([this.view]);
     this.on_view_change_bounds(this.view.rect);
   }
 }
