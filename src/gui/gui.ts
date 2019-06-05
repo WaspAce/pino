@@ -1,22 +1,56 @@
 import { IPino } from './../pino_types';
+
 export class PinoGui {
+
   view: GuiPanel;
+  tabs: GuiTabs;
 
   private form: GuiForm;
+  private on_tab_added: (value?: number | PromiseLike<number>) => void;
 
   private create_form() {
     this.form = new GuiForm(this);
     const rect = screen.get_monitor(0).workarea_rect;
-    this.form.caption = 'Pino browser';
+    this.form.caption = 'Pino';
     this.form.rect.width = rect.width;
     this.form.rect.height = rect.height;
     this.form.visible = true;
   }
 
+  private do_on_tab_plus_click() {
+    this.pino.add_tab();
+  }
+
+  private do_on_tab_move(
+    idx_from: number,
+    idx_to: number
+  ) {
+    if (idx_from === -1) {
+      if (this.on_tab_added) {
+        const resolve = this.on_tab_added;
+        this.on_tab_added = undefined;
+        resolve(idx_to);
+      }
+      this.pino.active_tab_index_changed(idx_to);
+    }
+  }
+
+  private do_on_tab_click() {
+    this.pino.active_tab_index_changed(this.tabs.active_tab_index);
+  }
+
+  private create_tabs() {
+    this.tabs = new GuiTabs(this.form, this);
+    this.tabs.align = AlignType.alTop;
+    this.tabs.on_tab_plus_click = this.do_on_tab_plus_click;
+    this.tabs.on_tab_move = this.do_on_tab_move;
+    this.tabs.on_tab_click = this.do_on_tab_click;
+  }
+
   private on_view_change_bounds(
     rect: Rect
   ) {
-    this.pino.on_view_resized(rect);
+    this.pino.view_resized(rect);
   }
 
   private do_on_view_mouse_wheel(
@@ -120,7 +154,14 @@ export class PinoGui {
     private readonly pino: IPino
   ) {
     this.create_form();
+    this.create_tabs();
     this.create_view();
-    this.on_view_change_bounds(this.view.rect);
+  }
+
+  add_tab(): Promise<number> {
+    return new Promise<number>(resolve => {
+      this.on_tab_added = resolve;
+      this.tabs.add_tab(-1, '');
+    });
   }
 }

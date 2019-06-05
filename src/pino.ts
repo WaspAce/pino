@@ -1,15 +1,15 @@
+import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
 import { IPino, PinoOptions } from './pino_types';
-import { PinoBrowser } from './browser/browser';
 
 export class Pino implements IPino {
 
   screen_info: ScreenInfo;
   options: PinoOptions;
+  gui: PinoGui;
 
-  private browser: PinoBrowser;
-  private gui: PinoGui;
-  private on_initialized: (value?: any | PromiseLike<any>) => void;
+  private active_tab: PinoTab;
+  private tabs_by_gui_tab_index = new Map<number, PinoTab>();
 
   private get_default_rect() {
     const result = new Rect();
@@ -30,12 +30,16 @@ export class Pino implements IPino {
         device_scale_factor: 1,
         is_monochrome: false
       },
-      browser: {
-        client: {
-          render_handler: {
+      tab: {
+        browser: {
+          client: {
+            render_handler: {
+            }
           }
         }
-      }
+      },
+      app_loop_interval_ms: 5,
+      gui_loop_interval_ms: 5
     };
     if (!user_options) {
       this.options = default_options;
@@ -43,7 +47,7 @@ export class Pino implements IPino {
       this.options = Object.assign(default_options, user_options);
     }
     if (this.options.gui) {
-      this.options.browser.client.render_handler.use_monitor = true;
+      this.options.tab.browser.client.render_handler.use_monitor = true;
     }
   }
 
@@ -74,105 +78,25 @@ export class Pino implements IPino {
     this.screen_info.is_monochrome = this.options.screen.is_monochrome;
   }
 
-  private create_browser(
-    create_browser: boolean
-  ) {
-    this.browser = new PinoBrowser(this, create_browser);
-  }
-
   private create_gui() {
     if (this.options.gui) {
       this.gui = new PinoGui(this);
     }
   }
 
-  private resolve_initialized() {
-    if (this.on_initialized) {
-      const resolve = this.on_initialized;
-      this.on_initialized = undefined;
-      resolve();
-    }
+  private init_app() {
+    CEF_APP.init();
+    CEF_APP.loop_interval_ms = this.options.app_loop_interval_ms;
+    system.gui_loop_interval_ms = this.options.gui_loop_interval_ms;
   }
 
   constructor(
-    user_options: PinoOptions,
-    create_browser?: boolean
+    user_options: PinoOptions
   ) {
     this.init_options(user_options);
     this.init_screen_info();
+    this.init_app();
     this.create_gui();
-    this.create_browser(create_browser);
-  }
-
-  on_view_resized(
-    view_rect: Rect
-  ): void {
-    if (this.browser) {
-      this.browser.was_resized(view_rect);
-    }
-  }
-
-  send_mouse_wheel_event(
-    event: MouseEvent,
-    delta: number
-  ) {
-    if (this.browser) {
-      this.browser.send_mouse_wheel_event(event, delta);
-    }
-  }
-
-  send_mouse_down_event(
-    event: MouseEvent,
-    button: MouseButtonType
-  ) {
-    if (this.browser) {
-      this.browser.send_mouse_down_event(event, button);
-    }
-  }
-
-  send_mouse_up_event(
-    event: MouseEvent,
-    button: MouseButtonType
-  ) {
-    if (this.browser) {
-      this.browser.send_mouse_up_event(event, button);
-    }
-  }
-
-  send_mouse_move_event(
-    event: MouseEvent
-  ) {
-    if (this.browser) {
-      this.browser.send_mouse_move_event(event);
-    }
-  }
-
-  send_key_press(
-    event: KeyEvent
-  ) {
-    if (this.browser) {
-      this.browser.send_key_press(event);
-    }
-  }
-
-  send_key_down(
-    event: KeyEvent
-  ) {
-    if (this.browser) {
-      this.browser.send_key_down(event);
-    }
-  }
-
-  send_key_up(
-    event: KeyEvent
-  ) {
-    if (this.browser) {
-      this.browser.send_key_up(event);
-    }
-  }
-
-  get_screen_info(): ScreenInfo {
-    return this.screen_info;
   }
 
   get_view_rect(): Rect {
@@ -181,25 +105,100 @@ export class Pino implements IPino {
     }
   }
 
-  browser_created() {
-    if (this.gui) {
-      this.browser.add_draw_target(this.gui.view);
+  view_resized(
+    view_rect: Rect
+  ): void {
+    if (this.active_tab) {
+      this.active_tab.view_resized(view_rect);
     }
-    this.resolve_initialized();
   }
 
-  async wait_initialized() {
-    return new Promise(resolve => {
-      this.on_initialized = resolve;
-      if (this.browser.native) {
-        this.resolve_initialized();
+  active_tab_index_changed(
+    gui_active_tab_index: number
+  ) {
+    this.tabs_by_gui_tab_index.forEach(pino_tab => {
+      if (pino_tab.gui_tab_index === gui_active_tab_index) {
+        pino_tab.was_hidden(false);
+        this.active_tab = pino_tab;
+      } else {
+        pino_tab.was_hidden(true);
       }
     });
   }
 
-  async load(
-    url: string
+  send_mouse_wheel_event(
+    event: MouseEvent,
+    delta: number
   ) {
-    await this.browser.load(url);
+    if (this.active_tab) {
+      this.active_tab.send_mouse_wheel_event(event, delta);
+    }
+  }
+
+  send_mouse_down_event(
+    event: MouseEvent,
+    button: MouseButtonType
+  ) {
+    if (this.active_tab) {
+      this.active_tab.send_mouse_down_event(event, button);
+    }
+  }
+
+  send_mouse_up_event(
+    event: MouseEvent,
+    button: MouseButtonType
+  ) {
+    if (this.active_tab) {
+      this.active_tab.send_mouse_up_event(event, button);
+    }
+  }
+
+  send_mouse_move_event(
+    event: MouseEvent
+  ) {
+    if (this.active_tab) {
+      this.active_tab.send_mouse_move_event(event);
+    }
+  }
+
+  send_key_press(
+    event: KeyEvent
+  ) {
+    if (this.active_tab) {
+      this.active_tab.send_key_press(event);
+    }
+  }
+
+  send_key_down(
+    event: KeyEvent
+  ) {
+    if (this.active_tab) {
+      this.active_tab.send_key_down(event);
+    }
+  }
+
+  send_key_up(
+    event: KeyEvent
+  ) {
+    if (this.active_tab) {
+      this.active_tab.send_key_up(event);
+    }
+  }
+
+  async add_tab(): Promise<PinoTab> {
+    let gui_tab_index = -1;
+    if (this.gui) {
+      gui_tab_index = await this.gui.add_tab();
+    }
+    const result = new PinoTab(this, true);
+    await result.wait_initialized();
+    result.gui_tab_index = gui_tab_index;
+    this.tabs_by_gui_tab_index.set(gui_tab_index, result);
+    if (this.gui) {
+      if (this.gui.tabs.active_tab_index !== gui_tab_index) {
+        result.was_hidden(true);
+      }
+    }
+    return result;
   }
 }

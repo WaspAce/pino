@@ -1,5 +1,5 @@
+import { IPinoTab } from './../tab_types';
 import { PinoBrowserClient } from './browser_client/browser_client';
-import { IPino } from './../pino_types';
 import { IPinoBrowser, PinoBrowserOptions } from './browser_types';
 
 export class PinoBrowser implements IPinoBrowser {
@@ -42,7 +42,7 @@ export class PinoBrowser implements IPinoBrowser {
   }
 
   constructor(
-    private readonly pino: IPino,
+    private readonly pino: IPinoTab,
     private readonly create_browser?: boolean
   ) {
     this.init_options();
@@ -67,7 +67,7 @@ export class PinoBrowser implements IPinoBrowser {
   }
 
   get_screen_info(): ScreenInfo {
-    return this.pino.screen_info;
+    return this.pino.get_screen_info();
   }
 
   get_view_rect(): Rect {
@@ -160,6 +160,24 @@ export class PinoBrowser implements IPinoBrowser {
         this.on_loaded = resolve;
         this.native.get_main_frame().load_url(url);
       });
+    }
+  }
+
+  async wait_loaded() {
+    return new Promise(resolve => {
+      if (this.native.is_loading) {
+        this.on_loaded = resolve;
+      } else {
+        resolve();
+      }
+    });
+  }
+
+  was_hidden(
+    hidden: boolean
+  ) {
+    if (this.host) {
+      this.host.was_hidden(hidden);
     }
   }
 }

@@ -1,17 +1,21 @@
-import { PinoBrowserOptions } from './browser/browser_types';
-
-export type OnViewResized = (
-  view_rect: Rect
-) => void;
+import { PinoGui } from './gui/gui';
+import { PinoTabOptions } from './tab/tab_types';
+import { PinoTab } from './tab/tab';
 
 export interface IPino {
   screen_info: ScreenInfo;
   options: PinoOptions;
-
-  on_view_resized: OnViewResized;
+  gui?: PinoGui;
 
   get_view_rect(): Rect;
-  get_screen_info(): ScreenInfo;
+
+  view_resized(
+    view_rect: Rect
+  );
+
+  active_tab_index_changed(
+    gui_active_tab_index: number
+  );
 
   send_mouse_wheel_event(
     event: MouseEvent,
@@ -44,7 +48,7 @@ export interface IPino {
     event: KeyEvent
   );
 
-  browser_created();
+  add_tab(): Promise<PinoTab>;
 }
 
 export interface ScreenOptions {
@@ -58,5 +62,7 @@ export interface ScreenOptions {
 export interface PinoOptions {
   gui?: boolean;
   screen?: ScreenOptions;
-  browser?: PinoBrowserOptions;
+  tab?: PinoTabOptions;
+  app_loop_interval_ms?: number;
+  gui_loop_interval_ms?: number;
 }
