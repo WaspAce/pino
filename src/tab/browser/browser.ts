@@ -42,6 +42,14 @@ export class PinoBrowser implements IPinoBrowser {
     }
   }
 
+  private start_load_timer() {
+    setTimeout(() => {
+      this.page_loaded();
+      this.native.stop_load();
+    },
+    this.options.load_timeout_ms);
+  }
+
   constructor(
     private readonly pino: IPinoTab,
     private readonly create_browser?: boolean
@@ -167,8 +175,11 @@ export class PinoBrowser implements IPinoBrowser {
       if (this.native.is_loading) {
         this.native.stop_load();
       }
-      this.native.get_main_frame().load_url(url);
-      return this.wait_loaded();
+      return new Promise(resolve => {
+        this.on_loaded = resolve;
+        this.start_load_timer();
+        this.native.get_main_frame().load_url(url);
+      });
     }
   }
 
@@ -176,10 +187,7 @@ export class PinoBrowser implements IPinoBrowser {
     return new Promise(resolve => {
       if (this.native.is_loading) {
         this.on_loaded = resolve;
-        setTimeout(() => {
-          this.page_loaded();
-        },
-        this.options.load_timeout_ms);
+        this.start_load_timer();
       } else {
         resolve();
       }
