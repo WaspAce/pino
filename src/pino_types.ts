@@ -66,4 +66,5 @@ export interface PinoOptions {
   app_loop_interval_ms?: number;
   gui_loop_interval_ms?: number;
   initial_scripts?: string[];
+  user_agent?: string;
 }

@@ -5,13 +5,20 @@ export interface IPinoBrowser {
 
   get_screen_info(): ScreenInfo;
   get_view_rect(): Rect;
+  
   add_draw_target(
     target: GuiPanel
   );
+
   browser_created(
     browser: Browser
   );
+
   page_loaded();
+
+  process_message_received(
+    message: ProcessMessage
+  );
 }
 
 export interface PinoBrowserOptions {

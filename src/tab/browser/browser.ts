@@ -9,6 +9,7 @@ export class PinoBrowser implements IPinoBrowser {
   private client: PinoBrowserClient;
   private host: BrowserHost;
   private on_loaded: (value?: any | PromiseLike<any>) => void;
+  private on_ipc_message: (value?: ListValue | PromiseLike<ListValue>) => void;
 
   private init_options() {
     const user_options = this.pino.options.browser;
@@ -148,6 +149,16 @@ export class PinoBrowser implements IPinoBrowser {
     }
   }
 
+  process_message_received(
+    message: ProcessMessage
+  ) {
+    if (this.on_ipc_message) {
+      const resolve = this.on_ipc_message;
+      this.on_ipc_message = undefined;
+      resolve(message.get_argument_list());
+    }
+  }
+
   async load(
     url: string
   ) {
@@ -179,5 +190,22 @@ export class PinoBrowser implements IPinoBrowser {
     if (this.host) {
       this.host.was_hidden(hidden);
     }
+  }
+
+  async execute_js_and_wait_ipc(
+    code: string
+  ): Promise<ListValue> {
+    return new Promise<ListValue>((resolve, reject) => {
+      if (this.native) {
+        this.on_ipc_message = resolve;
+        this.native.get_main_frame().execute_java_script(
+          code,
+          'http://custom_js.wa',
+          0
+        );
+      } else {
+        reject('No native browser');
+      }
+    });
   }
 }

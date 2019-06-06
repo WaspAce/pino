@@ -37,11 +37,20 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     this.native.load_handler = this.load_handler.native;
   }
 
+  private do_on_process_message_received(
+    browser: Browser,
+    source_process: ProcessId,
+    message: ProcessMessage
+  ) {
+    this.browser.process_message_received(message);
+  }
+
   private create_client() {
     this.native = new BrowserClient(this);
     this.create_render_handler();
     this.create_life_span_handler();
     this.create_load_handler();
+    this.native.on_process_message_received = this.do_on_process_message_received;
   }
 
   constructor(

@@ -1,35 +1,16 @@
 import { Pino } from './src/pino';
 
 const pino = new Pino({
-  gui: true,
-  initial_scripts: ['document.write("fdlkjhsadfkjldshfkljdshfkljdshfkldshfkljdshfkjhdsklfh");']
+  gui: true
 });
 
 pino.add_tab().then(tab => {
-  tab.load('yandex.ru');
-});
-
-pino.add_tab().then(tab => {
-  tab.load('google.ru');
-});
-
-pino.add_tab().then(tab => {
-  tab.load('youtube.com').then(() => {
-    console.log('youtube loaded');
+  tab.load('zhenomaniya.ru').then(() => {
+    console.log('tab loaded');
+    tab.execute_js_and_wait_ipc('jQuery("body"); transfer_data(true)').then(args => {
+      console.log('0 data transferred: ', args.get_type(0));
+    });
   });
 });
-
-// pino.wait_initialized().then(() => {
-//   console.log('initialized');
-//   pino.load('dfdslsdfdsfdsfdsfdsfsdfdsfdsfkfjdfdslfjdslkfjkfl.ru').then(() => {
-//     console.log('err loaded');
-//     pino.load('yandex.ru').then(() => {
-//       console.log('yandex loaded');
-//       pino.load('youtube.com').then(() => {
-//         console.log('youtube loaded');
-//       })
-//     });
-//   });
-// });
 
 export default pino;

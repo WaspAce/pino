@@ -149,4 +149,10 @@ export class PinoTab implements IPinoTab {
   ) {
     this.browser.was_hidden(hidden);
   }
+
+  async execute_js_and_wait_ipc(
+    code: string
+  ) {
+    return this.browser.execute_js_and_wait_ipc(code);
+  }
 }

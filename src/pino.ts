@@ -40,7 +40,8 @@ export class Pino implements IPino {
         }
       },
       app_loop_interval_ms: 5,
-      gui_loop_interval_ms: 5
+      gui_loop_interval_ms: 5,
+      user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
     };
     if (!user_options) {
       this.options = default_options;
@@ -110,6 +111,7 @@ export class Pino implements IPino {
     this.define_subprocess_info();
     CEF_APP.init();
     CEF_APP.loop_interval_ms = this.options.app_loop_interval_ms;
+    CEF_APP.settings.user_agent = this.options.user_agent;
     system.gui_loop_interval_ms = this.options.gui_loop_interval_ms;
   }
 
