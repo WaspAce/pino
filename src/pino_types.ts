@@ -61,6 +61,7 @@ export interface ScreenOptions {
 
 export interface PinoOptions {
   gui?: boolean;
+  view_rect?: Rect;
   screen?: ScreenOptions;
   tab?: PinoTabOptions;
   app_loop_interval_ms?: number;

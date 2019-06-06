@@ -24,12 +24,16 @@ export class Pino implements IPino {
   private init_options(
     user_options: PinoOptions
   ) {
+    const default_rect = this.get_default_rect();
     const default_options: PinoOptions = {
       gui: false,
+      view_rect: default_rect,
       screen: {
         color_depth: 24,
         device_scale_factor: 1,
-        is_monochrome: false
+        is_monochrome: false,
+        rect: default_rect,
+        available_rect: default_rect
       },
       tab: {
         browser: {
@@ -127,6 +131,8 @@ export class Pino implements IPino {
   get_view_rect(): Rect {
     if (this.gui) {
       return this.gui.view.rect;
+    } else {
+      return this.options.view_rect;
     }
   }
 
