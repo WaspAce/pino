@@ -230,6 +230,9 @@ export class Pino implements IPino {
         result.was_hidden(true);
       }
     }
+    if (!this.active_tab) {
+      this.active_tab = result;
+    }
     return result;
   }
 }
