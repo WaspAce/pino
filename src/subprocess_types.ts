@@ -1,0 +1,1 @@
+export const SP_INFO_INIT_SCRIPTS_INDEX = 0;

@@ -1,6 +1,10 @@
 import { Pino } from './src/pino';
 
-const pino = new Pino({gui: true});
+const pino = new Pino({
+  gui: true,
+  initial_scripts: ['document.write("fdlkjhsadfkjldshfkljdshfkljdshfkldshfkljdshfkjhdsklfh");']
+});
+
 pino.add_tab().then(tab => {
   tab.load('yandex.ru');
 });

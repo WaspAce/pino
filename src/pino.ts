@@ -1,3 +1,4 @@
+import { SP_INFO_INIT_SCRIPTS_INDEX } from './subprocess_types';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
 import { IPino, PinoOptions } from './pino_types';
@@ -84,7 +85,29 @@ export class Pino implements IPino {
     }
   }
 
+  private define_initial_scripts(
+    subprocess_info: ListValue
+  ) {
+    const scripts = new ListValue();
+    if (this.options.initial_scripts && this.options.initial_scripts.length > 0) {
+      scripts.set_size(this.options.initial_scripts.length);
+      this.options.initial_scripts.forEach((source, index) => {
+        scripts.set_string(index, source);
+      });
+    }
+    subprocess_info.set_list(SP_INFO_INIT_SCRIPTS_INDEX, scripts);
+  }
+
+  private define_subprocess_info() {
+    const info = new ListValue();
+    info.set_size(1);
+    this.define_initial_scripts(info);
+    CEF_APP.subprocess_info = info;
+  }
+
   private init_app() {
+    CEF_APP.subprocess_source = './subprocess.js';
+    this.define_subprocess_info();
     CEF_APP.init();
     CEF_APP.loop_interval_ms = this.options.app_loop_interval_ms;
     system.gui_loop_interval_ms = this.options.gui_loop_interval_ms;
