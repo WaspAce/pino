@@ -16,4 +16,5 @@ export interface IPinoTab {
 
 export interface PinoTabOptions {
   browser?: PinoBrowserOptions;
+  load_timeout_ms?: number;
 }

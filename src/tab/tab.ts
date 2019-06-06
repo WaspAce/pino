@@ -13,12 +13,15 @@ export class PinoTab implements IPinoTab {
 
   private init_options() {
     const user_options = this.pino.options.tab;
-    const default_options: PinoTabOptions = {};
+    const default_options: PinoTabOptions = {
+      load_timeout_ms: 30000
+    };
     if (!user_options) {
       this.options = default_options;
     } else {
       this.options = Object.assign(default_options, user_options);
     }
+    this.options.browser.load_timeout_ms = this.options.load_timeout_ms;
   }
 
   private create_browser(

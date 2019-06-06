@@ -45,7 +45,8 @@ export class Pino implements IPino {
       },
       app_loop_interval_ms: 5,
       gui_loop_interval_ms: 5,
-      user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36'
+      user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36',
+      load_timeout_ms: 30000
     };
     if (!user_options) {
       this.options = default_options;
@@ -55,6 +56,7 @@ export class Pino implements IPino {
     if (this.options.gui) {
       this.options.tab.browser.client.render_handler.use_monitor = true;
     }
+    this.options.tab.load_timeout_ms = this.options.load_timeout_ms;
   }
 
   private init_screen_info() {

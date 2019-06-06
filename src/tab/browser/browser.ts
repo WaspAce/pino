@@ -167,10 +167,8 @@ export class PinoBrowser implements IPinoBrowser {
       if (this.native.is_loading) {
         this.native.stop_load();
       }
-      return new Promise(resolve => {
-        this.on_loaded = resolve;
-        this.native.get_main_frame().load_url(url);
-      });
+      this.native.get_main_frame().load_url(url);
+      return this.wait_loaded();
     }
   }
 
@@ -178,6 +176,10 @@ export class PinoBrowser implements IPinoBrowser {
     return new Promise(resolve => {
       if (this.native.is_loading) {
         this.on_loaded = resolve;
+        setTimeout(() => {
+          this.page_loaded();
+        },
+        this.options.load_timeout_ms);
       } else {
         resolve();
       }
