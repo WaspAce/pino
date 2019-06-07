@@ -12,7 +12,7 @@ export class PinoBrowser implements IPinoBrowser {
   private on_page_loaded: (value?: any | PromiseLike<any>) => void;
   private on_ipc_message_resolve: (value?: ListValue | PromiseLike<ListValue>) => void;
   private on_ipc_message_reject: (reason?: any) => void;
-  private load_timeout: number;
+  private load_timeout = -1;
 
   private init_options() {
     const user_options = this.pino.options.browser;
@@ -46,10 +46,12 @@ export class PinoBrowser implements IPinoBrowser {
   }
 
   private start_load_timer() {
-    if (this.load_timeout) {
+    if (this.load_timeout > -1) {
       clearTimeout(this.load_timeout);
+      this.load_timeout = -1;
     }
     this.load_timeout = setTimeout(() => {
+      this.load_timeout = -1;
       this.page_loaded();
       this.frames_loaded();
     },
