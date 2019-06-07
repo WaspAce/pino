@@ -15,7 +15,7 @@ export class PinoBrowser implements IPinoBrowser {
   private load_timeout = -1;
 
   private init_options() {
-    const user_options = this.pino.options.browser;
+    const user_options = this.tab.options.browser;
     const default_options: PinoBrowserOptions = {
       frame_rate: 30
     };
@@ -71,7 +71,7 @@ export class PinoBrowser implements IPinoBrowser {
   }
 
   constructor(
-    private readonly pino: IPinoTab,
+    readonly tab: IPinoTab,
     private readonly create_browser?: boolean
   ) {
     this.init_options();
@@ -84,7 +84,7 @@ export class PinoBrowser implements IPinoBrowser {
   ) {
     this.native = browser;
     this.host = browser.get_host();
-    this.pino.browser_created();
+    this.tab.browser_created();
   }
 
   frames_loaded() {
@@ -104,11 +104,11 @@ export class PinoBrowser implements IPinoBrowser {
   }
 
   get_screen_info(): ScreenInfo {
-    return this.pino.get_screen_info();
+    return this.tab.get_screen_info();
   }
 
   get_view_rect(): Rect {
-    return this.pino.get_view_rect();
+    return this.tab.get_view_rect();
   }
 
   add_draw_target(

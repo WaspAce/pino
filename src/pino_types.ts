@@ -1,3 +1,4 @@
+import { UrlFilter } from './tab/browser/browser_client/browser_client_types';
 import { PinoGui } from './gui/gui';
 import { PinoTabOptions } from './tab/tab_types';
 import { PinoTab } from './tab/tab';
@@ -6,6 +7,7 @@ export interface IPino {
   screen_info: ScreenInfo;
   options: PinoOptions;
   gui?: PinoGui;
+  url_filter?: UrlFilter;
 
   get_view_rect(): Rect;
 

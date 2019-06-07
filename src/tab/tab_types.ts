@@ -1,6 +1,8 @@
+import { IPino } from './../pino_types';
 import { PinoBrowserOptions } from './browser/browser_types';
 
 export interface IPinoTab {
+  readonly pino: IPino;
   options: PinoTabOptions;
 
   view_resized(

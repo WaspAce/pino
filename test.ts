@@ -3,13 +3,19 @@ import { Pino } from './src/pino';
 const pino = new Pino({
   gui: true
 });
+pino.url_filter = (
+  url: string
+): boolean => {
+  if (url.endsWith('.jpg') || url.endsWith('.png')) {
+    return false;
+  } else {
+    return true;
+  }
+};
 
 pino.add_tab().then(tab => {
-  tab.load('example.ru').then(() => {
+  tab.load('https://pixabay.com/ru/').then(() => {
     console.log('tab loaded');
-    tab.execute_js_and_wait_ipc('ololo; transfer_data(true)').catch(reason => {
-      console.log(reason);
-    });
   });
 });
 

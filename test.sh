@@ -8,4 +8,4 @@ fi
 SOURCE="$PWD/dist/test.js"
 
 cd $ALEPATH
-./ale --source=$SOURCE --profile_path=./profile --unmute
+./ale --source=$SOURCE --unmute

@@ -1,18 +1,29 @@
+import { IPinoBrowserClient } from './../browser_client_types';
 import { IPinoRequestHandler } from './request_handler_types';
-export class PinoRequestHandler {
+
+export class PinoRequestHandler implements IPinoRequestHandler {
+
+  native: RequestHandler;
+
+  private do_on_before_resource_load(
+    browser: Browser,
+    frame: Frame,
+    request: Request
+  ): boolean {
+    if (this.client.browser.tab.pino.url_filter) {
+      return this.client.browser.tab.pino.url_filter(request.url);
+    } else {
+      return true;
+    }
+  }
+
   private init_native() {
-    const native = new RequestHandler(this.client);
-    if (this.client.on_render_process_terminated) {
-      native.on_render_process_terminated = this.client.on_render_process_terminated;
-    }
-    if (this.client.on_before_browse) {
-      native.on_before_browse = this.client.on_before_browse;
-    }
-    this.client.native.request_handler = native;
+    this.native = new RequestHandler(this);
+    this.native.on_before_resource_load = this.do_on_before_resource_load;
   }
 
   constructor(
-    private readonly client: IPinoRequestHandler
+    readonly client: IPinoBrowserClient
   ) {
     this.init_native();
   }

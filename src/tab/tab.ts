@@ -39,7 +39,7 @@ export class PinoTab implements IPinoTab {
   }
 
   constructor(
-    private readonly pino: IPino,
+    readonly pino: IPino,
     create_browser?: boolean
   ) {
     this.init_options();

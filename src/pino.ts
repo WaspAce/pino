@@ -1,3 +1,4 @@
+import { UrlFilter } from './tab/browser/browser_client/browser_client_types';
 import { SP_INFO_INIT_SCRIPTS_INDEX } from './subprocess_types';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
@@ -8,6 +9,7 @@ export class Pino implements IPino {
   screen_info: ScreenInfo;
   options: PinoOptions;
   gui: PinoGui;
+  url_filter: UrlFilter;
 
   private active_tab: PinoTab;
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();
