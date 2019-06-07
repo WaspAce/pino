@@ -17,7 +17,9 @@ export class PinoBrowser implements IPinoBrowser {
   private init_options() {
     const user_options = this.tab.options.browser;
     const default_options: PinoBrowserOptions = {
-      frame_rate: 30
+      frame_rate: 30,
+      wait_page_loaded_by_progress: false,
+      load_timeout_ms: 20000
     };
     if (!user_options) {
       this.options = default_options;
@@ -230,7 +232,9 @@ export class PinoBrowser implements IPinoBrowser {
   async wait_loaded() {
     const promises = [
       this.wait_frames_loaded(),
-      this.wait_page_loaded()
+      if (this.options.wait_page_loaded_by_progress) {
+        this.wait_page_loaded();
+      }
     ];
     this.start_load_timer();
     return Promise.all(promises);
