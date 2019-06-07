@@ -230,12 +230,10 @@ export class PinoBrowser implements IPinoBrowser {
   }
 
   async wait_loaded() {
-    const promises = [
-      this.wait_frames_loaded(),
-      if (this.options.wait_page_loaded_by_progress) {
-        this.wait_page_loaded();
-      }
-    ];
+    const promises = [this.wait_frames_loaded()];
+    if (this.options.wait_page_loaded_by_progress) {
+      promises.push(this.wait_page_loaded());
+    }
     this.start_load_timer();
     return Promise.all(promises);
   }
