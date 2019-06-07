@@ -110,7 +110,7 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     this.render_handler.was_resized(view_rect);
   }
 
-  get url_filter(): UrlFilter {
-    return this.browser.tab.pino.url_filter;
+  reset_loading() {
+    this.create_load_handler();
   }
 }

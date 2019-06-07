@@ -4,11 +4,10 @@ export class PinoSubprocess {
   private initial_scritps: string[] = [];
   private extension: V8Extension;
   private extension_handler: V8Handler;
+  private load_handler: LoadHandler;
 
-  private do_on_context_created(
-    browser: Browser,
-    frame: Frame,
-    context: V8Context
+  private execute_initial_scripts(
+    frame: Frame
   ) {
     this.initial_scritps.forEach(source => {
       frame.execute_java_script(
@@ -17,6 +16,14 @@ export class PinoSubprocess {
         0
       );
     });
+  }
+
+  private do_on_context_created(
+    browser: Browser,
+    frame: Frame,
+    context: V8Context
+  ) {
+    this.execute_initial_scripts(frame);
   }
 
   private define_initial_scripts(
@@ -113,8 +120,40 @@ export class PinoSubprocess {
     subprocess.render_process_handler = this.rph;
   }
 
+  private do_on_load_end(
+    browser: Browser,
+    frame: Frame,
+    http_status_code: number
+  ) {
+    this.execute_initial_scripts(frame);
+  };
+
+  private do_on_loading_state_change(
+    browser: Browser,
+    is_loading: boolean,
+    can_go_back: boolean,
+    can_go_forward: boolean
+  ) {
+    if (!is_loading) {
+      const frame_ids = browser.get_frame_identifiers();
+      frame_ids.forEach(id => {
+        const frame = browser.get_frame_by_identifier(id);
+        this.execute_initial_scripts(frame);
+      });
+      this.execute_initial_scripts(browser.get_main_frame());
+    }
+  }
+
+  private create_load_handler() {
+    this.load_handler = new LoadHandler(this);
+    this.load_handler.on_load_end = this.do_on_load_end;
+    this.load_handler.on_loading_state_change = this.do_on_loading_state_change;
+    this.rph.load_handler = this.load_handler;
+  }
+
   constructor() {
     this.create_render_process_handler();
+    this.create_load_handler();
     subprocess.start();
   }
 }

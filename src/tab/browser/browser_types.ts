@@ -31,5 +31,4 @@ export interface PinoBrowserOptions {
   frame_rate?: number;
   client?: PinoBrowserClientOptions;
   load_timeout_ms?: number;
-  wait_page_loaded_by_progress?: boolean;
 }
