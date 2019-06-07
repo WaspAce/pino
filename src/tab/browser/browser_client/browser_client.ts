@@ -1,3 +1,4 @@
+import { PinoDisplayHandler } from './display_handler/display_handler';
 import { PinoLoadHandler } from './load_handler/load_handler';
 import { PinoLifeSpanHandler } from './life_span_handler/life_span_handler';
 import { IPinoBrowserClient, PinoBrowserClientOptions } from './browser_client_types';
@@ -11,6 +12,7 @@ export class PinoBrowserClient implements IPinoBrowserClient {
   private render_handler: PinoRenderHandler;
   private life_span_handler: PinoLifeSpanHandler;
   private load_handler: PinoLoadHandler;
+  private display_handler: PinoDisplayHandler;
 
   private init_options() {
     const user_options = this.browser.options.client;
@@ -37,6 +39,11 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     this.native.load_handler = this.load_handler.native;
   }
 
+  private create_display_handler() {
+    this.display_handler = new PinoDisplayHandler(this)
+    this.native.display_handler = this.display_handler.native;
+  }
+
   private do_on_process_message_received(
     browser: Browser,
     source_process: ProcessId,
@@ -50,6 +57,7 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     this.create_render_handler();
     this.create_life_span_handler();
     this.create_load_handler();
+    this.create_display_handler();
     this.native.on_process_message_received = this.do_on_process_message_received;
   }
 
@@ -64,6 +72,10 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     browser: Browser
   ) {
     this.browser.browser_created(browser);
+  }
+
+  frames_loaded() {
+    this.browser.frames_loaded();
   }
 
   page_loaded() {

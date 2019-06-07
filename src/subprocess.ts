@@ -97,7 +97,7 @@ export class PinoSubprocess {
       };
       var js_exception = function(e) {
         native function js_exception();
-        return js_exception(JSON.stringify(e));
+        return js_exception(e.message);
       };
     `;
     this.create_extension_handler();

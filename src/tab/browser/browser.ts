@@ -8,8 +8,11 @@ export class PinoBrowser implements IPinoBrowser {
 
   private client: PinoBrowserClient;
   private host: BrowserHost;
-  private on_loaded: (value?: any | PromiseLike<any>) => void;
-  private on_ipc_message: (value?: ListValue | PromiseLike<ListValue>) => void;
+  private on_frames_loaded: (value?: any | PromiseLike<any>) => void;
+  private on_page_loaded: (value?: any | PromiseLike<any>) => void;
+  private on_ipc_message_resolve: (value?: ListValue | PromiseLike<ListValue>) => void;
+  private on_ipc_message_reject: (reason?: any) => void;
+  private load_timeout: number;
 
   private init_options() {
     const user_options = this.pino.options.browser;
@@ -43,11 +46,26 @@ export class PinoBrowser implements IPinoBrowser {
   }
 
   private start_load_timer() {
-    setTimeout(() => {
+    if (this.load_timeout) {
+      clearTimeout(this.load_timeout);
+    }
+    this.load_timeout = setTimeout(() => {
       this.page_loaded();
-      this.native.stop_load();
+      this.frames_loaded();
     },
     this.options.load_timeout_ms);
+  }
+
+  private wrap_js_code(
+    code: string
+  ): string {
+    return `
+      try {
+        ${code}
+      } catch(e) {
+        js_exception(e);
+      }
+    `;
   }
 
   constructor(
@@ -67,10 +85,18 @@ export class PinoBrowser implements IPinoBrowser {
     this.pino.browser_created();
   }
 
+  frames_loaded() {
+    if (this.on_frames_loaded) {
+      const resolve = this.on_frames_loaded;
+      this.on_frames_loaded = undefined;
+      resolve();
+    }
+  }
+
   page_loaded() {
-    if (this.on_loaded && !this.native.is_loading) {
-      const resolve = this.on_loaded;
-      this.on_loaded = undefined;
+    if (this.on_page_loaded) {
+      const resolve = this.on_page_loaded;
+      this.on_page_loaded = undefined;
       resolve();
     }
   }
@@ -160,38 +186,52 @@ export class PinoBrowser implements IPinoBrowser {
   process_message_received(
     message: ProcessMessage
   ) {
-    if (this.on_ipc_message) {
-      const resolve = this.on_ipc_message;
-      this.on_ipc_message = undefined;
+    if (message.name === 'transfer_data' && this.on_ipc_message_resolve) {
+      this.on_ipc_message_reject = undefined;
+      const resolve = this.on_ipc_message_resolve;
+      this.on_ipc_message_resolve = undefined;
       resolve(message.get_argument_list());
+    } else if (message.name === 'js_exception' && this.on_ipc_message_reject) {
+      this.on_ipc_message_resolve = undefined;
+      const reject = this.on_ipc_message_reject;
+      this.on_ipc_message_reject = undefined;
+      const error = message.get_argument_list().get_string(0);
+      reject(`IPC exception: ${error}`);
     }
+  }
+
+  async wait_frames_loaded() {
+    return new Promise(resolve => {
+      this.on_frames_loaded = resolve;
+    });
+  }
+
+  async wait_page_loaded() {
+    return new Promise(resolve => {
+      this.on_page_loaded = resolve;
+    });
   }
 
   async load(
     url: string
   ) {
-    this.on_loaded = undefined;
     if (this.native) {
       if (this.native.is_loading) {
         this.native.stop_load();
       }
-      return new Promise(resolve => {
-        this.on_loaded = resolve;
-        this.start_load_timer();
-        this.native.get_main_frame().load_url(url);
-      });
+      this.native.get_main_frame().load_url(url);
+      await this.wait_loaded();
+      this.native.stop_load();
     }
   }
 
   async wait_loaded() {
-    return new Promise(resolve => {
-      if (this.native.is_loading) {
-        this.on_loaded = resolve;
-        this.start_load_timer();
-      } else {
-        resolve();
-      }
-    });
+    const promises = [
+      this.wait_frames_loaded(),
+      this.wait_page_loaded()
+    ];
+    this.start_load_timer();
+    return Promise.all(promises);
   }
 
   was_hidden(
@@ -207,9 +247,10 @@ export class PinoBrowser implements IPinoBrowser {
   ): Promise<ListValue> {
     return new Promise<ListValue>((resolve, reject) => {
       if (this.native) {
-        this.on_ipc_message = resolve;
+        this.on_ipc_message_resolve = resolve;
+        this.on_ipc_message_reject = reject;
         this.native.get_main_frame().execute_java_script(
-          code,
+          this.wrap_js_code(code),
           'http://custom_js.wa',
           0
         );

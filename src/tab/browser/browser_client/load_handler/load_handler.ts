@@ -30,8 +30,8 @@ export class PinoLoadHandler implements IPinoLoadHandler {
     http_status_code: number
   ) {
     this.counter--;
-    if (this.counter === 0 && !browser.is_loading) {
-      this.client.page_loaded();
+    if (this.counter === 0) {
+      this.client.frames_loaded();
     }
   }
 

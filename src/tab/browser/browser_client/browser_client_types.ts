@@ -16,4 +16,6 @@ export interface IPinoBrowserClient {
   );
 
   page_loaded();
+
+  frames_loaded();
 }
