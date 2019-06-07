@@ -8,7 +8,7 @@ export class PinoBrowser implements IPinoBrowser {
 
   private client: PinoBrowserClient;
   private host: BrowserHost;
-  private on_frames_loaded: (value?: any | PromiseLike<any>) => void;
+  private on_subprocess_loaded: (value?: any | PromiseLike<any>) => void;
   private on_page_loaded: (value?: any | PromiseLike<any>) => void;
   private on_ipc_message_resolve: (value?: ListValue | PromiseLike<ListValue>) => void;
   private on_ipc_message_reject: (reason?: any) => void;
@@ -54,7 +54,7 @@ export class PinoBrowser implements IPinoBrowser {
     this.load_timeout = setTimeout(() => {
       this.load_timeout = -1;
       this.page_loaded();
-      this.frames_loaded();
+      this.subprocess_loaded();
     },
     this.options.load_timeout_ms);
   }
@@ -88,10 +88,10 @@ export class PinoBrowser implements IPinoBrowser {
     this.tab.browser_created();
   }
 
-  frames_loaded() {
-    if (this.on_frames_loaded) {
-      const resolve = this.on_frames_loaded;
-      this.on_frames_loaded = undefined;
+  subprocess_loaded() {
+    if (this.on_subprocess_loaded) {
+      const resolve = this.on_subprocess_loaded;
+      this.on_subprocess_loaded = undefined;
       resolve();
     }
   }
@@ -203,9 +203,9 @@ export class PinoBrowser implements IPinoBrowser {
     }
   }
 
-  async wait_frames_loaded() {
+  async wait_subprocess_loaded() {
     return new Promise(resolve => {
-      this.on_frames_loaded = resolve;
+      this.on_subprocess_loaded = resolve;
     });
   }
 
@@ -225,14 +225,12 @@ export class PinoBrowser implements IPinoBrowser {
       this.native.get_main_frame().load_url(url);
       await this.wait_loaded();
       this.native.stop_load();
-      this.client.reset_loading();
     }
   }
 
   async wait_loaded() {
-    this.client.reset_loading();
     const promises = [
-      this.wait_frames_loaded(),
+      this.wait_subprocess_loaded(),
       this.wait_page_loaded()
     ];
     this.start_load_timer();

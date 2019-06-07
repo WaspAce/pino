@@ -1,8 +1,8 @@
+import { IPC_PAGE_LOADED } from './../../../subprocess/subprocess_types';
 import { PinoRequestHandler } from './request_handler/request_handler';
 import { PinoDisplayHandler } from './display_handler/display_handler';
-import { PinoLoadHandler } from './load_handler/load_handler';
 import { PinoLifeSpanHandler } from './life_span_handler/life_span_handler';
-import { IPinoBrowserClient, PinoBrowserClientOptions, UrlFilter } from './browser_client_types';
+import { IPinoBrowserClient, PinoBrowserClientOptions } from './browser_client_types';
 import { IPinoBrowser } from './../browser_types';
 import { PinoRenderHandler } from './render_handler/render_handler';
 
@@ -12,7 +12,6 @@ export class PinoBrowserClient implements IPinoBrowserClient {
 
   private render_handler: PinoRenderHandler;
   private life_span_handler: PinoLifeSpanHandler;
-  private load_handler: PinoLoadHandler;
   private display_handler: PinoDisplayHandler;
   private request_handler: PinoRequestHandler;
 
@@ -36,11 +35,6 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     this.native.life_span_handler = this.life_span_handler.native;
   }
 
-  private create_load_handler() {
-    this.load_handler = new PinoLoadHandler(this);
-    this.native.load_handler = this.load_handler.native;
-  }
-
   private create_display_handler() {
     this.display_handler = new PinoDisplayHandler(this)
     this.native.display_handler = this.display_handler.native;
@@ -56,14 +50,17 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     source_process: ProcessId,
     message: ProcessMessage
   ) {
-    this.browser.process_message_received(message);
+    if (message.name === IPC_PAGE_LOADED) {
+      this.browser.subprocess_loaded();
+    } else {
+      this.browser.process_message_received(message);
+    }
   }
 
   private create_client() {
     this.native = new BrowserClient(this);
     this.create_render_handler();
     this.create_life_span_handler();
-    this.create_load_handler();
     this.create_display_handler();
     this.create_request_handler();
     this.native.on_process_message_received = this.do_on_process_message_received;
@@ -80,10 +77,6 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     browser: Browser
   ) {
     this.browser.browser_created(browser);
-  }
-
-  frames_loaded() {
-    this.browser.frames_loaded();
   }
 
   page_loaded() {
@@ -108,9 +101,5 @@ export class PinoBrowserClient implements IPinoBrowserClient {
     view_rect: Rect
   ) {
     this.render_handler.was_resized(view_rect);
-  }
-
-  reset_loading() {
-    this.create_load_handler();
   }
 }

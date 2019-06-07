@@ -20,7 +20,7 @@ export interface IPinoBrowser {
 
   page_loaded();
 
-  frames_loaded();
+  subprocess_loaded();
 
   process_message_received(
     message: ProcessMessage

@@ -1,5 +1,5 @@
 import { UrlFilter } from './tab/browser/browser_client/browser_client_types';
-import { SP_INFO_INIT_SCRIPTS_INDEX } from './subprocess_types';
+import { SP_INFO_INIT_SCRIPTS_INDEX } from './subprocess/subprocess_types';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
 import { IPino, PinoOptions } from './pino_types';
@@ -115,7 +115,7 @@ export class Pino implements IPino {
   }
 
   private init_app() {
-    CEF_APP.subprocess_source = './subprocess.js';
+    CEF_APP.subprocess_source = './subprocess/subprocess.js';
     this.define_subprocess_info();
     CEF_APP.init();
     CEF_APP.loop_interval_ms = this.options.app_loop_interval_ms;
