@@ -1,5 +1,5 @@
-import { IPC_PAGE_LOADED } from './../subprocess_types';
-import { PinoSubprocessRenderProcessHandler } from '../render_process_handler/render_process_handler';
+import { IPC_PAGE_LOADED } from '../../subprocess_types';
+import { PinoSubprocessRenderProcessHandler } from '../render_process_handler';
 
 export class PinoSubprocessLoadHandler {
 
