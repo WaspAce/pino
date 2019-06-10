@@ -5,8 +5,8 @@ import { IPinoBrowser, PinoBrowserOptions } from './browser_types';
 export class PinoBrowser implements IPinoBrowser {
   options: PinoBrowserOptions;
   native: Browser;
+  client: PinoBrowserClient;
 
-  private client: PinoBrowserClient;
   private host: BrowserHost;
   private on_subprocess_loaded: (value?: any | PromiseLike<any>) => void;
   private on_page_loaded: (value?: any | PromiseLike<any>) => void;

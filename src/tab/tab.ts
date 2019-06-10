@@ -7,8 +7,8 @@ export class PinoTab implements IPinoTab {
   screen_info: ScreenInfo;
   options: PinoTabOptions;
   gui_tab_index = -1;
+  browser: PinoBrowser;
 
-  private browser: PinoBrowser;
   private on_initialized: (value?: any | PromiseLike<any>) => void;
 
   private init_options() {

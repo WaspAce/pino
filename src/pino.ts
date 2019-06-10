@@ -1,3 +1,4 @@
+import { PinoExtensionHandler } from './extension_handler/extension_handler';
 import { UrlFilter } from './tab/browser/browser_client/browser_client_types';
 import { SP_INFO_INIT_SCRIPTS_INDEX } from './subprocess/subprocess_types';
 import { PinoTab } from './tab/tab';
@@ -13,6 +14,7 @@ export class Pino implements IPino {
 
   private active_tab: PinoTab;
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();
+  private extension_handler: PinoExtensionHandler;
 
   private get_default_rect() {
     const result = new Rect();
@@ -123,6 +125,10 @@ export class Pino implements IPino {
     system.gui_loop_interval_ms = this.options.gui_loop_interval_ms;
   }
 
+  private create_extension_handler() {
+    this.extension_handler = new PinoExtensionHandler(this);
+  }
+
   constructor(
     user_options: PinoOptions
   ) {
@@ -130,6 +136,7 @@ export class Pino implements IPino {
     this.init_screen_info();
     this.init_app();
     this.create_gui();
+    this.create_extension_handler();
   }
 
   get_view_rect(): Rect {
@@ -238,5 +245,13 @@ export class Pino implements IPino {
       this.active_tab = result;
     }
     return result;
+  }
+
+  async load_extension(
+    path: string
+  ): Promise<Extension> {
+    const request_context = CEF_APP.get_global_request_context();
+    request_context.load_extension(path, null, this.extension_handler.native);
+    return await this.extension_handler.wait_extension_loaded();
   }
 }
