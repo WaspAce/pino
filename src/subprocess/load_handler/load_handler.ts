@@ -1,5 +1,5 @@
 import { IPC_PAGE_LOADED } from './../subprocess_types';
-import { PinoSubprocess } from './../subprocess';
+import { PinoSubprocessRenderProcessHandler } from '../render_process_handler/render_process_handler';
 
 export class PinoSubprocessLoadHandler {
 
@@ -8,7 +8,7 @@ export class PinoSubprocessLoadHandler {
   private execute_initial_scripts(
     frame: Frame
   ) {
-    this.sub.initial_scritps.forEach(source => {
+    this.render_process_handler.subprocess.initial_scritps.forEach(source => {
       frame.execute_java_script(
         source,
         'http://initial_scripts.wa',
@@ -50,7 +50,7 @@ export class PinoSubprocessLoadHandler {
   }
 
   constructor(
-    readonly sub: PinoSubprocess
+    readonly render_process_handler: PinoSubprocessRenderProcessHandler
   ) {
     this.init_native();
   }
