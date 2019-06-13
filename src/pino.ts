@@ -129,6 +129,27 @@ export class Pino {
     this.extension_handler = new PinoExtensionHandler(this);
   }
 
+  private async process_new_tab(
+    tab: PinoTab
+  ): Promise<PinoTab> {
+    await tab.wait_initialized();
+    let gui_tab_index = -1;
+    if (this.gui) {
+      gui_tab_index = await this.gui.add_tab();
+    }
+    tab.gui_tab_index = gui_tab_index;
+    this.tabs_by_gui_tab_index.set(gui_tab_index, tab);
+    if (this.gui) {
+      if (this.gui.tabs.active_tab_index !== gui_tab_index) {
+        tab.was_hidden(true);
+      }
+    }
+    if (!this.active_tab) {
+      this.active_tab = tab;
+    }
+    return tab;
+  }
+
   constructor(
     user_options: PinoOptions
   ) {
@@ -227,24 +248,15 @@ export class Pino {
     }
   }
 
-  async add_tab(): Promise<PinoTab> {
-    let gui_tab_index = -1;
-    if (this.gui) {
-      gui_tab_index = await this.gui.add_tab();
-    }
+  add_tab_sync(): PinoTab {
     const result = new PinoTab(this, true);
-    await result.wait_initialized();
-    result.gui_tab_index = gui_tab_index;
-    this.tabs_by_gui_tab_index.set(gui_tab_index, result);
-    if (this.gui) {
-      if (this.gui.tabs.active_tab_index !== gui_tab_index) {
-        result.was_hidden(true);
-      }
-    }
-    if (!this.active_tab) {
-      this.active_tab = result;
-    }
+    this.process_new_tab(result);
     return result;
+  }
+
+  async add_tab(): Promise<PinoTab> {
+    const result = new PinoTab(this, true);
+    return this.process_new_tab(result);
   }
 
   async load_extension(
