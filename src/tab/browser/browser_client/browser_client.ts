@@ -1,12 +1,12 @@
+import { PinoBrowser } from './../browser';
 import { IPC_PAGE_LOADED } from './../../../subprocess/subprocess_types';
 import { PinoRequestHandler } from './request_handler/request_handler';
 import { PinoDisplayHandler } from './display_handler/display_handler';
 import { PinoLifeSpanHandler } from './life_span_handler/life_span_handler';
-import { IPinoBrowserClient, PinoBrowserClientOptions } from './browser_client_types';
-import { IPinoBrowser } from './../browser_types';
+import { PinoBrowserClientOptions } from './browser_client_types';
 import { PinoRenderHandler } from './render_handler/render_handler';
 
-export class PinoBrowserClient implements IPinoBrowserClient {
+export class PinoBrowserClient {
   options: PinoBrowserClientOptions;
   native: BrowserClient;
 
@@ -67,7 +67,7 @@ export class PinoBrowserClient implements IPinoBrowserClient {
   }
 
   constructor(
-    readonly browser: IPinoBrowser
+    readonly browser: PinoBrowser
   ) {
     this.init_options();
     this.create_client();

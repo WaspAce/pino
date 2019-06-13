@@ -1,7 +1,6 @@
-import { IPinoBrowserClient } from './../browser_client_types';
-import { IPinoDisplayHandler } from './display_handler_types';
+import { PinoBrowserClient } from '../browser_client';
 
-export class PinoDisplayHandler implements IPinoDisplayHandler {
+export class PinoDisplayHandler {
   native: DisplayHandler;
 
   private do_on_loading_progress_change(
@@ -19,7 +18,7 @@ export class PinoDisplayHandler implements IPinoDisplayHandler {
   }
 
   constructor(
-    private readonly client: IPinoBrowserClient
+    private readonly client: PinoBrowserClient
   ) {
     this.init_native();
   }

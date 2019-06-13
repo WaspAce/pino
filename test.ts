@@ -5,7 +5,7 @@ const pino = new Pino({
 });
 
 pino.add_tab().then(tab => {
-  tab.load('https://www.youtube.com/watch?v=vuT_bXzhqhY&play=true').then(() => {
+  tab.load('chrome://extensions-support').then(() => {
     console.log('tab loaded');
   });
 });

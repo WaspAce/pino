@@ -1,7 +1,7 @@
-import { IPinoBrowserClient } from './../browser_client_types';
-import { IPinoRenderHandler, PinoRenderHandlerOptions } from './render_handler_types';
+import { PinoRenderHandlerOptions } from './render_handler_types';
+import { PinoBrowserClient } from '../browser_client';
 
-export class PinoRenderHandler implements IPinoRenderHandler {
+export class PinoRenderHandler {
   native: RenderHandler;
 
   private options: PinoRenderHandlerOptions;
@@ -49,7 +49,7 @@ export class PinoRenderHandler implements IPinoRenderHandler {
   }
 
   constructor(
-    private readonly client: IPinoBrowserClient
+    private readonly client: PinoBrowserClient
   ) {
     this.init_options();
     this.init_monitor();

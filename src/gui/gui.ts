@@ -1,4 +1,4 @@
-import { IPino } from './../pino_types';
+import { Pino } from '../pino';
 
 export class PinoGui {
 
@@ -151,7 +151,7 @@ export class PinoGui {
   }
 
   constructor(
-    private readonly pino: IPino
+    private readonly pino: Pino
   ) {
     this.create_form();
     this.create_tabs();

@@ -3,9 +3,9 @@ import { UrlFilter } from './tab/browser/browser_client/browser_client_types';
 import { SP_INFO_INIT_SCRIPTS_INDEX } from './subprocess/subprocess_types';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
-import { IPino, PinoOptions } from './pino_types';
+import { PinoOptions } from './pino_types';
 
-export class Pino implements IPino {
+export class Pino {
 
   screen_info: ScreenInfo;
   options: PinoOptions;

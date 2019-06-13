@@ -1,7 +1,6 @@
-import { IPinoBrowserClient } from './../browser_client_types';
-import { IPinoRequestHandler } from './request_handler_types';
+import { PinoBrowserClient } from '../browser_client';
 
-export class PinoRequestHandler implements IPinoRequestHandler {
+export class PinoRequestHandler {
 
   native: RequestHandler;
 
@@ -23,7 +22,7 @@ export class PinoRequestHandler implements IPinoRequestHandler {
   }
 
   constructor(
-    readonly client: IPinoBrowserClient
+    readonly client: PinoBrowserClient
   ) {
     this.init_native();
   }

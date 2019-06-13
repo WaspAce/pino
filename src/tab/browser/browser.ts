@@ -1,8 +1,8 @@
-import { IPinoTab } from './../tab_types';
 import { PinoBrowserClient } from './browser_client/browser_client';
-import { IPinoBrowser, PinoBrowserOptions } from './browser_types';
+import { PinoBrowserOptions } from './browser_types';
+import { PinoTab } from '../tab';
 
-export class PinoBrowser implements IPinoBrowser {
+export class PinoBrowser {
   options: PinoBrowserOptions;
   native: Browser;
   client: PinoBrowserClient;
@@ -72,7 +72,7 @@ export class PinoBrowser implements IPinoBrowser {
   }
 
   constructor(
-    readonly tab: IPinoTab,
+    readonly tab: PinoTab,
     private readonly create_browser?: boolean
   ) {
     this.init_options();

@@ -1,8 +1,8 @@
-import { IPino } from './../pino_types';
 import { PinoBrowser } from './browser/browser';
-import { IPinoTab, PinoTabOptions } from './tab_types';
+import { PinoTabOptions } from './tab_types';
+import { Pino } from '../pino';
 
-export class PinoTab implements IPinoTab {
+export class PinoTab {
 
   screen_info: ScreenInfo;
   options: PinoTabOptions;
@@ -39,7 +39,7 @@ export class PinoTab implements IPinoTab {
   }
 
   constructor(
-    readonly pino: IPino,
+    readonly pino: Pino,
     create_browser?: boolean
   ) {
     this.init_options();
