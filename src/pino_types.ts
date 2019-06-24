@@ -18,4 +18,5 @@ export interface PinoOptions {
   initial_scripts?: string[];
   user_agent?: string;
   load_timeout_ms?: number;
+  block_subframes?: boolean;
 }
