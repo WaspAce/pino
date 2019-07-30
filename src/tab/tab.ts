@@ -129,18 +129,21 @@ export class PinoTab {
   }
 
   async wait_initialized() {
-    return new Promise(resolve => {
+    await new Promise(resolve => {
       this.on_initialized = resolve;
       if (this.browser.native) {
         this.resolve_initialized();
       }
     });
+    await this.browser.wait_loaded();
   }
 
   async load(
-    url: string
+    url: string,
+    referrer?: string,
+    referrer_policy?: ReferrerPolicy
   ) {
-    return this.browser.load(url);
+    return this.browser.load(url, referrer, referrer_policy);
   }
 
   async wait_loaded() {

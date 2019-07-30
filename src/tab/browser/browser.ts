@@ -40,7 +40,7 @@ export class PinoBrowser {
       const browser = new Browser(
         window_info,
         this.client.native,
-        '',
+        'about:blank',
         settings
       );
     }
@@ -216,13 +216,25 @@ export class PinoBrowser {
   }
 
   async load(
-    url: string
+    url: string,
+    referrer?: string,
+    referrer_policy?: ReferrerPolicy
   ) {
     if (this.native) {
       if (this.native.is_loading) {
         this.native.stop_load();
       }
-      this.native.get_main_frame().load_url(url);
+      const request = new Request();
+      request.url = url;
+      if (referrer) {
+        if (!referrer_policy) {
+          referrer_policy = ReferrerPolicy.REFERRER_POLICY_CLEAR_REFERRER_ON_TRANSITION_FROM_SECURE_TO_INSECURE;
+        }
+        request.set_referrer(referrer, referrer_policy);
+        this.native.get_main_frame().load_request(request);
+      } else {
+        this.native.get_main_frame().load_url(url);
+      }
       await this.wait_loaded();
       this.native.stop_load();
     }

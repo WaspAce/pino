@@ -1,3 +1,4 @@
+import { PinoLoadHandler } from './load_handler/load_handler';
 import { PinoBrowser } from './../browser';
 import { IPC_PAGE_LOADED } from './../../../subprocess/subprocess_types';
 import { PinoRequestHandler } from './request_handler/request_handler';
@@ -14,6 +15,7 @@ export class PinoBrowserClient {
   private life_span_handler: PinoLifeSpanHandler;
   private display_handler: PinoDisplayHandler;
   private request_handler: PinoRequestHandler;
+  private load_handler: PinoLoadHandler;
 
   private init_options() {
     const user_options = this.browser.options.client;
@@ -45,6 +47,11 @@ export class PinoBrowserClient {
     this.native.request_handler = this.request_handler.native;
   }
 
+  private create_load_handler() {
+    this.load_handler = new PinoLoadHandler(this);
+    this.native.load_handler = this.load_handler.native;
+  }
+
   private do_on_process_message_received(
     browser: Browser,
     source_process: ProcessId,
@@ -63,6 +70,7 @@ export class PinoBrowserClient {
     this.create_life_span_handler();
     this.create_display_handler();
     this.create_request_handler();
+    // this.create_load_handler();
     this.native.on_process_message_received = this.do_on_process_message_received;
   }
 
