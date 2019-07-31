@@ -71,6 +71,32 @@ export class PinoBrowser {
     `;
   }
 
+  private new_load_request(
+    resolve: (value?: unknown) => void,
+    reject: (reason?: any) => void,
+    url: string,
+    referrer?: string,
+    referrer_policy?: ReferrerPolicy,
+  ): Request | undefined {
+    const result = new Request();
+    result.url = url;
+    if (result.url === '') {
+      reject(`'url' parameter must be fully qualified URL`);
+      return undefined;
+    }
+    if (referrer) {
+      if (!referrer_policy) {
+        referrer_policy = ReferrerPolicy.REFERRER_POLICY_CLEAR_REFERRER_ON_TRANSITION_FROM_SECURE_TO_INSECURE;
+      }
+      result.set_referrer(referrer, referrer_policy);
+      if (result.referrer_url === '') {
+        reject(`'referrer' parameter must be fully qualified URL`);
+        return undefined;
+      }
+    }
+    return result;
+  }
+
   constructor(
     readonly tab: PinoTab,
     private readonly create_browser?: boolean
@@ -220,24 +246,23 @@ export class PinoBrowser {
     referrer?: string,
     referrer_policy?: ReferrerPolicy
   ) {
-    if (this.native) {
-      if (this.native.is_loading) {
-        this.native.stop_load();
+    return new Promise((resolve, reject) => {
+      if (!this.native) {
+        reject('Browser native not initialized');
+        return;
       }
-      const request = new Request();
-      request.url = url;
-      if (referrer) {
-        if (!referrer_policy) {
-          referrer_policy = ReferrerPolicy.REFERRER_POLICY_CLEAR_REFERRER_ON_TRANSITION_FROM_SECURE_TO_INSECURE;
-        }
-        request.set_referrer(referrer, referrer_policy);
-        this.native.get_main_frame().load_request(request);
-      } else {
-        this.native.get_main_frame().load_url(url);
-      }
-      await this.wait_loaded();
       this.native.stop_load();
-    }
+      const request = this.new_load_request(resolve, reject, url, referrer, referrer_policy);
+      if (request) {
+        this.native.get_main_frame().load_request(request);
+        this.wait_loaded().then(_ => {
+          this.native.stop_load();
+          resolve();
+        }).catch(reason => {
+          reject(reason);
+        });
+      }
+    });
   }
 
   async wait_loaded() {
