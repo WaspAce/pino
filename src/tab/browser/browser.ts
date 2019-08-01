@@ -1,3 +1,4 @@
+import { URI } from './../../uri/uri';
 import { PinoBrowserClient } from './browser_client/browser_client';
 import { PinoBrowserOptions } from './browser_types';
 import { PinoTab } from '../tab';
@@ -81,6 +82,9 @@ export class PinoBrowser {
     const result = new Request();
     result.url = url;
     if (result.url === '') {
+      result.url = new URI(url).stringify();
+    }
+    if (result.url === '') {
       reject(`'url' parameter must be fully qualified URL`);
       return undefined;
     }
@@ -89,6 +93,9 @@ export class PinoBrowser {
         referrer_policy = ReferrerPolicy.REFERRER_POLICY_CLEAR_REFERRER_ON_TRANSITION_FROM_SECURE_TO_INSECURE;
       }
       result.set_referrer(referrer, referrer_policy);
+      if (result.referrer_url === '') {
+        result.set_referrer(new URI(referrer).stringify(), referrer_policy);
+      }
       if (result.referrer_url === '') {
         reject(`'referrer' parameter must be fully qualified URL`);
         return undefined;
