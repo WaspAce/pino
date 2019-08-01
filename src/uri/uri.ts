@@ -24,6 +24,8 @@ export class URI {
   path = '';
   params = '';
 
+  private custom_port = false;
+
   private separate_schema(
     url: string
   ): string {
@@ -88,12 +90,14 @@ export class URI {
       domain = splitted[1];
       if (domain.indexOf(DELIMITER_PORT) === 0) {
         this.port = domain.split(DELIMITER_PORT)[1];
+        this.custom_port = true;
       }
     } else {
       if (domain.indexOf(DELIMITER_PORT) > -1) {
         const splitted = domain.split(DELIMITER_PORT);
         this.host = splitted[0];
         this.port = splitted[1];
+        this.custom_port = true;
       } else {
         this.host = domain;
       }
@@ -152,7 +156,7 @@ export class URI {
       result += DELIM_CREDENTIALS;
     }
     result += this.host;
-    if (!this.schema_matches_port()) {
+    if (this.custom_port || !this.schema_matches_port()) {
       result += DELIMITER_PORT + this.port;
     }
     result += this.path;
