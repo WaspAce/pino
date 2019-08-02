@@ -1,13 +1,15 @@
-const DELIM_SCHEMA = '://';
+export enum UriScheme {
+  SCHEME_HTTP = 'http',
+  SCHEME_HTTPS = 'https',
+  SCHEME_FTP = 'ftp'
+}
+
+const DELIM_SCHEME = '://';
 const DELIM_CREDENTIALS = '@';
 const DELIM_PATH = '/';
 const DELIM_PARAMS = '?';
 const DELIM_PASSWORD = ':';
 const DELIMITER_PORT = ':';
-
-const SCHEMA_HTTP = 'HTTP';
-const SCHEMA_HTTPS = 'HTTPS';
-const SCHEMA_FTP = 'FTP';
 
 const PORT_HTTP = '80';
 const PORT_HTTPS = '443';
@@ -16,7 +18,6 @@ const PORT_FTP = '21';
 const HOST_LOCALHOST = 'localhost';
 
 export class URI {
-  schema = SCHEMA_HTTP.toLowerCase();
   user = '';
   password = '';
   host = '';
@@ -24,26 +25,27 @@ export class URI {
   path = '';
   params = '';
 
+  private f_scheme = UriScheme.SCHEME_HTTP;
   private custom_port = false;
 
-  private separate_schema(
+  private separate_scheme(
     url: string
   ): string {
     let result = url;
-    if (url.indexOf(DELIM_SCHEMA) > -1) {
-      const splitted = url.split(DELIM_SCHEMA);
-      this.schema = splitted[0];
+    if (url.indexOf(DELIM_SCHEME) > -1) {
+      const splitted = url.split(DELIM_SCHEME);
+      this.f_scheme = splitted[0] as UriScheme;
       result = splitted[1];
     }
     return result;
   }
 
   private parse_protocol() {
-    switch (this.schema.toUpperCase()) {
-      case SCHEMA_HTTPS:
+    switch (this.f_scheme.toLowerCase()) {
+      case UriScheme.SCHEME_HTTPS:
         this.port = PORT_HTTPS;
         break;
-      case SCHEMA_FTP:
+      case UriScheme.SCHEME_FTP:
         this.port = PORT_FTP;
         break;
       default:
@@ -52,13 +54,13 @@ export class URI {
   }
 
   private separate_credentials(
-    without_schema: string
+    without_scheme: string
   ) {
-    let result = without_schema;
-    const x = without_schema.indexOf(DELIM_CREDENTIALS);
-    const y = without_schema.indexOf(DELIM_PATH);
+    let result = without_scheme;
+    const x = without_scheme.indexOf(DELIM_CREDENTIALS);
+    const y = without_scheme.indexOf(DELIM_PATH);
     if (x > -1 && (x < y || y < 0)) {
-      let splitted = without_schema.split(DELIM_CREDENTIALS);
+      let splitted = without_scheme.split(DELIM_CREDENTIALS);
       const tmp = splitted[0];
       result = splitted[1];
       if (tmp.indexOf(DELIM_PASSWORD) > -1) {
@@ -123,11 +125,11 @@ export class URI {
     }
   }
 
-  private schema_matches_port(): boolean {
-    const upper = this.schema.toUpperCase();
-    return (upper === SCHEMA_FTP && this.port === PORT_FTP) ||
-      (upper === SCHEMA_HTTP && this.port === PORT_HTTP) ||
-      (upper === SCHEMA_HTTPS && this.port === PORT_HTTPS);
+  private scheme_matches_port(): boolean {
+    const lower = this.f_scheme.toLowerCase();
+    return (lower === UriScheme.SCHEME_FTP && this.port === PORT_FTP) ||
+      (lower === UriScheme.SCHEME_HTTP && this.port === PORT_HTTP) ||
+      (lower === UriScheme.SCHEME_HTTPS && this.port === PORT_HTTPS);
   }
 
   constructor(
@@ -139,16 +141,16 @@ export class URI {
   parse(
     url: string
   ) {
-    const without_schema = this.separate_schema(url);
+    const without_scheme = this.separate_scheme(url);
     this.parse_protocol();
-    const without_credentials = this.separate_credentials(without_schema);
+    const without_credentials = this.separate_credentials(without_scheme);
     const path_and_params = this.extract_path_and_params(without_credentials);
     this.separate_path_and_params(path_and_params);
     this.correct_host();
   }
 
   stringify(): string {
-    let result = this.schema + DELIM_SCHEMA + this.user;
+    let result = this.f_scheme + DELIM_SCHEME + this.user;
     if (this.password !== '') {
       result += DELIM_PASSWORD + this.password;
     }
@@ -156,7 +158,7 @@ export class URI {
       result += DELIM_CREDENTIALS;
     }
     result += this.host;
-    if (this.custom_port || !this.schema_matches_port()) {
+    if (this.custom_port || !this.scheme_matches_port()) {
       result += DELIMITER_PORT + this.port;
     }
     result += this.path;
@@ -164,5 +166,28 @@ export class URI {
       result += DELIM_PARAMS + this.params;
     }
     return result;
+  }
+
+  set scheme(
+    value: UriScheme
+  ) {
+    this.f_scheme = value;
+    switch (value) {
+      case UriScheme.SCHEME_HTTP:
+        this.port = PORT_HTTP;
+        break;
+      case UriScheme.SCHEME_HTTPS:
+        this.port = PORT_HTTPS;
+        break;
+      case UriScheme.SCHEME_FTP:
+        this.port = PORT_FTP;
+        break;
+      default:
+        break;
+    }
+  }
+
+  get scheme(): UriScheme {
+    return this.f_scheme;
   }
 }
