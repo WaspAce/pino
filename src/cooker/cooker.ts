@@ -1,3 +1,9 @@
+import {
+  CookerCookieCollector,
+  ADJUVANT_COOKIE_NAME,
+  ADJUVANT_COOKIE_DOMAIN,
+  ADJUVANT_COOKIE_VALUE
+} from './../cookie_collector/cookie_collector';
 import { CookerSetCookieCallback } from './set_cookie_callback/set_cookie_callback';
 import { URI, UriScheme } from './../uri/uri';
 export class Cooker {
@@ -15,6 +21,14 @@ export class Cooker {
     }
   }
 
+  private async install_adjuvant_cookie() {
+    const cookie = new Cookie();
+    cookie.domain = ADJUVANT_COOKIE_DOMAIN;
+    cookie.name = ADJUVANT_COOKIE_NAME;
+    cookie.value = ADJUVANT_COOKIE_VALUE;
+    await this.install_cookie(cookie);
+  }
+
   constructor() {
     if (!CEF_APP.initialized) {
       throw new Error('CEF_APP MUST be initialized!');
@@ -27,6 +41,7 @@ export class Cooker {
     return new Promise((resolve, reject) => {
       this.on_cookies_delete_resolve = resolve;
       if (!this.manager.delete_cookies('', '', this.delete_cookies_callback)) {
+        this.on_cookies_delete_resolve = undefined;
         reject('Could not clear cookies');
       }
     });
@@ -54,5 +69,19 @@ export class Cooker {
         await callback_https.wait_for_complete();
       }
     }
+  }
+
+  async collect_cookies(): Promise<Cookie[]> {
+    await this.install_adjuvant_cookie();
+    return new Promise<Cookie[]>((resolve, reject) => {
+      const collector = new CookerCookieCollector();
+      if (!this.manager.visit_all_cookies(collector.native)) {
+        reject('Cannot access cookies');
+      } else {
+        collector.wait_for_cookies().then(cookies => {
+          resolve(cookies);
+        });
+      }
+    });
   }
 }
