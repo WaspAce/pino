@@ -1,3 +1,4 @@
+import { UriScheme } from './../uri/uri';
 import {
   CookerCookieCollector,
   ADJUVANT_COOKIE_NAME,
@@ -5,7 +6,8 @@ import {
   ADJUVANT_COOKIE_VALUE
 } from './../cookie_collector/cookie_collector';
 import { CookerSetCookieCallback } from './set_cookie_callback/set_cookie_callback';
-import { URI, UriScheme } from './../uri/uri';
+import { URI } from '../uri/uri';
+
 export class Cooker {
 
   private manager = CEF_APP.get_global_cookie_manager();

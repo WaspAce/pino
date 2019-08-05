@@ -1,7 +1,7 @@
-import { URI } from './../../uri/uri';
 import { PinoBrowserClient } from './browser_client/browser_client';
 import { PinoBrowserOptions } from './browser_types';
 import { PinoTab } from '../tab';
+import { URI } from '../../uri/uri';
 
 export class PinoBrowser {
   options: PinoBrowserOptions;
