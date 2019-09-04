@@ -8,4 +8,4 @@ fi
 SOURCE="$PWD/dist/test.js"
 
 cd $ALEPATH
-./ale --source=$SOURCE --unmute
+./ale --source=$SOURCE --unmute --chrome_debugging_port=10000

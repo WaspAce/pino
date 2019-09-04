@@ -27,7 +27,9 @@ export class HttpRequest {
     return new Promise((resolve, reject) => {
       this.on_resolve = resolve;
       this.on_reject = reject;
-      if (typeof body === 'object') {
+      if (Array.isArray(body)) {
+        this.xhr.send(body);
+      } else if (typeof body === 'object') {
         this.xhr.send(JSON.stringify(body));
       } else {
         this.xhr.send(body);

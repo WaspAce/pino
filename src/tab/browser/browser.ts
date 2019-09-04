@@ -278,7 +278,7 @@ export class PinoBrowser {
       this.wait_page_loaded()
     ];
     this.start_load_timer();
-    return Promise.all(promises);
+    await Promise.all(promises);
   }
 
   was_hidden(
