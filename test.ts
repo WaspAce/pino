@@ -5,9 +5,10 @@ const pino = new Pino({
 });
 
 pino.add_tab().then(tab => {
-  tab.load('chrome://extensions-support').then(() => {
-    console.log('tab loaded');
-  });
+  // tab.load('chrome://extensions-support').then(() => {
+  setTimeout( _ => {
+    tab.load('https://yandex.ru');
+  }, 4000);
 });
 
 export default pino;

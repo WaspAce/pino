@@ -42,7 +42,7 @@ export class PinoSubprocessV8Handler {
     if (context) {
       const browser = context.get_browser();
       if (browser) {
-        browser.send_process_message(ProcessId.PID_BROWSER, message);
+        browser.get_main_frame().send_process_message(ProcessId.PID_BROWSER, message);
       }
     }
   }

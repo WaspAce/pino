@@ -4,18 +4,6 @@ export class PinoRequestHandler {
 
   native: RequestHandler;
 
-  private do_on_before_resource_load(
-    browser: Browser,
-    frame: Frame,
-    request: Request
-  ): boolean {
-    if (this.client.browser.tab.pino.url_filter) {
-      return this.client.browser.tab.pino.url_filter(request.url);
-    } else {
-      return true;
-    }
-  }
-
   private do_on_before_browse(
     browser: Browser,
     frame: Frame,
@@ -31,7 +19,6 @@ export class PinoRequestHandler {
 
   private init_native() {
     this.native = new RequestHandler(this);
-    this.native.on_before_resource_load = this.do_on_before_resource_load;
     this.native.on_before_browse = this.do_on_before_browse;
   }
 

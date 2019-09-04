@@ -22,7 +22,8 @@ export class PinoLifeSpanHandler {
   ): {
     allow: boolean,
     client: BrowserClient,
-    no_javascript_access: boolean
+    no_javascript_access: boolean,
+    extra_info?: DictionaryValue
   } {
     const tab = this.client.browser.tab.pino.add_tab_sync();
     return {

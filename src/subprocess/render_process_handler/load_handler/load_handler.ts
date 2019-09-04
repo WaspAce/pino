@@ -39,7 +39,7 @@ export class PinoSubprocessLoadHandler {
       this.execute_initial_scripts(browser.get_main_frame());
 
       const message = new ProcessMessage(IPC_PAGE_LOADED);
-      browser.send_process_message(ProcessId.PID_BROWSER, message);
+      browser.get_main_frame().send_process_message(ProcessId.PID_BROWSER, message);
     }
   }
 

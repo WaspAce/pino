@@ -38,7 +38,7 @@ export class PinoBrowserClient {
   }
 
   private create_display_handler() {
-    this.display_handler = new PinoDisplayHandler(this)
+    this.display_handler = new PinoDisplayHandler(this);
     this.native.display_handler = this.display_handler.native;
   }
 
@@ -54,6 +54,7 @@ export class PinoBrowserClient {
 
   private do_on_process_message_received(
     browser: Browser,
+    frame: Frame,
     source_process: ProcessId,
     message: ProcessMessage
   ) {
