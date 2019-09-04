@@ -22,12 +22,16 @@ export class HttpRequest {
   }
 
   async send(
-    body?: string | number[]
+    body?: object | string | number[]
   ) {
     return new Promise((resolve, reject) => {
       this.on_resolve = resolve;
       this.on_reject = reject;
-      this.xhr.send(body);
+      if (typeof body === 'object') {
+        this.xhr.send(JSON.stringify(body));
+      } else {
+        this.xhr.send(body);
+      }
     });
   }
 
