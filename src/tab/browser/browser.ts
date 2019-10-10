@@ -259,16 +259,18 @@ export class PinoBrowser {
         return;
       }
       this.native.stop_load();
-      const request = this.new_load_request(resolve, reject, url, referrer, referrer_policy);
-      if (request) {
+      if (referrer) {
+        const request = this.new_load_request(resolve, reject, url, referrer, referrer_policy);
         this.native.get_main_frame().load_request(request);
-        this.wait_loaded().then(_ => {
-          this.native.stop_load();
-          resolve();
-        }).catch(reason => {
-          reject(reason);
-        });
+      } else {
+        this.native.get_main_frame().load_url(url);
       }
+      this.wait_loaded().then(_ => {
+        this.native.stop_load();
+        resolve();
+      }).catch(reason => {
+        reject(reason);
+      });
     });
   }
 
