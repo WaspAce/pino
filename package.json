@@ -7,7 +7,8 @@
   "scripts": {
     "lint": "tslint -p tsconfig.json -c tslint.json",
     "pretest": "tsc",
-    "test": "npx dotenv ./test.sh"
+    "test": "npx dotenv ./test.sh",
+    "build": "rimraf dist && tsc"
   },
   "author": "Architector",
   "license": "ISC",
