@@ -19,7 +19,7 @@ export class PinoLoadHandler {
     error_text: string,
     failed_url: string
   ) {
-    console.log('error: ', failed_url);
+    console.log('error: ', failed_url, ' : ', error_code, ' : ', error_text);
   }
 
   private do_on_load_end(
