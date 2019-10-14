@@ -71,7 +71,7 @@ export class PinoBrowserClient {
     this.create_life_span_handler();
     this.create_display_handler();
     this.create_request_handler();
-    this.create_load_handler();
+    // this.create_load_handler();
     this.native.on_process_message_received = this.do_on_process_message_received;
   }
 
