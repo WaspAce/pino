@@ -5,10 +5,9 @@ const pino = new Pino({
 });
 
 pino.add_tab().then(tab => {
-  tab.load('ya.ru').then(() => {
-    tab.load('google.ru').then(() => {
-      console.log('loaded');
-    });
+  tab.load('https://jigsaw.w3.org/HTTP/Basic/').then(() => {
+  // tab.load('https://yandex.ru').then(() => {
+    console.log('loaded');
   });
 });
 

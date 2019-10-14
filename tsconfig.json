@@ -3,7 +3,7 @@
       "target": "es2017",
       "removeComments": true,
       "outDir": "./dist",
-      "declaration": true,
+      "declaration": false,
       "typeRoots": [
         "./node_modules/ale_types/"
       ],
