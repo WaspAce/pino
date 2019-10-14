@@ -17,9 +17,26 @@ export class PinoRequestHandler {
     return false;
   }
 
+  private do_on_get_auth_credentials(
+    browser: Browser,
+    origin_url: string,
+    is_proxy: boolean,
+    host: string,
+    port: string,
+    realm: string,
+    scheme: string,
+    callback: AuthCallback
+  ): boolean {
+    console.log('AUTH');
+    callback.cont('admin', 'asuspasslamosos');
+    console.log('AUTH');
+    return true;
+  }
+
   private init_native() {
     this.native = new RequestHandler(this);
     this.native.on_before_browse = this.do_on_before_browse;
+    this.native.on_get_auth_credentials = this.do_on_get_auth_credentials;
   }
 
   constructor(
