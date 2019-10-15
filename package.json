@@ -16,6 +16,6 @@
     "ale_types": "git+https://github.com/WaspAce/ale_types.git",
     "dotenv-cli": "^1.4.0",
     "tslint": "^5.19.0",
-    "typescript": "^3.6.2"
+    "typescript": "^3.6.4"
   }
 }

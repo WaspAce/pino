@@ -157,8 +157,15 @@ export class PinoTab {
   }
 
   async execute_js_and_wait_ipc(
+    code: string,
+    timout_ms?: number
+  ): Promise<ListValue> {
+    return this.browser.execute_js_and_wait_ipc(code, timout_ms);
+  }
+
+  execute_js(
     code: string
   ) {
-    return this.browser.execute_js_and_wait_ipc(code);
+    this.browser.execute_js(code);
   }
 }

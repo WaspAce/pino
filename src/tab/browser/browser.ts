@@ -104,6 +104,17 @@ export class PinoBrowser {
     return result;
   }
 
+  private reject_ipc_message(
+    reason?
+  ) {
+    if (this.on_ipc_message_reject) {
+      this.on_ipc_message_resolve = undefined;
+      const reject = this.on_ipc_message_reject;
+      this.on_ipc_message_reject = undefined;
+      reject(reason);
+    }
+  }
+
   constructor(
     readonly tab: PinoTab,
     private readonly create_browser?: boolean
@@ -228,11 +239,8 @@ export class PinoBrowser {
       this.on_ipc_message_resolve = undefined;
       resolve(message.get_argument_list());
     } else if (message.name === 'js_exception' && this.on_ipc_message_reject) {
-      this.on_ipc_message_resolve = undefined;
-      const reject = this.on_ipc_message_reject;
-      this.on_ipc_message_reject = undefined;
       const error = message.get_argument_list().get_string(0);
-      reject(`IPC exception: ${error}`);
+      this.reject_ipc_message(`IPC exception: ${error}`);
     }
   }
 
@@ -292,7 +300,8 @@ export class PinoBrowser {
   }
 
   async execute_js_and_wait_ipc(
-    code: string
+    code: string,
+    timeout_ms?: number
   ): Promise<ListValue> {
     return new Promise<ListValue>((resolve, reject) => {
       if (this.native) {
@@ -303,9 +312,24 @@ export class PinoBrowser {
           'http://custom_js.wa',
           0
         );
+        if (timeout_ms && timeout_ms > 0) {
+          setTimeout(() => {
+            this.reject_ipc_message('IPC message wait timeout');
+          }, timeout_ms);
+        }
       } else {
         reject('No native browser');
       }
     });
+  }
+
+  execute_js(
+    code: string
+  ) {
+    this.native.get_main_frame().execute_java_script(
+      this.wrap_js_code(code),
+      'http://custom_js.wa',
+      0
+    );
   }
 }

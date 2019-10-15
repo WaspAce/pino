@@ -10,6 +10,18 @@ export class Pino {
   options: PinoOptions;
   gui: PinoGui;
   url_filter: UrlFilter;
+  on_get_auth_credentials: (
+    browser: Browser,
+    origin_url: string,
+    is_proxy: boolean,
+    host: string,
+    port: string,
+    realm: string,
+    scheme: string
+  ) => {
+    username: string;
+    password: string
+  };
 
   private active_tab: PinoTab;
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();

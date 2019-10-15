@@ -24,10 +24,24 @@ export class PinoRequestHandler {
     host: string,
     port: string,
     realm: string,
-    scheme: string,
-    callback: AuthCallback
-  ): boolean {
-    return false;
+    scheme: string
+  ): {
+    username: string;
+    password: string;
+  } {
+    if (this.client.browser.tab.pino.on_get_auth_credentials) {
+      return this.client.browser.tab.pino.on_get_auth_credentials(
+        browser,
+        origin_url,
+        is_proxy,
+        host,
+        port,
+        realm,
+        scheme
+      );
+    } else {
+      return undefined;
+    }
   }
 
   private init_native() {
