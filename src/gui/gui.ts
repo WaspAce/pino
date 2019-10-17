@@ -8,19 +8,33 @@ export class PinoGui {
   private form: GuiForm;
   private on_tab_added: (value?: number | PromiseLike<number>) => void;
   private on_form_ready: () => void;
+  private on_tabs_ready: () => void;
+  private on_view_ready: () => void;
 
   private do_on_form_paint() {
     this.pino.repaint();
   }
 
+  private do_on_form_ready() {
+    if (this.on_form_ready) {
+      const resolve = this.on_form_ready;
+      this.on_form_ready = undefined;
+      resolve();
+    }
+  }
+
   private async create_form() {
-    this.form = new GuiForm(this);
-    const rect = screen.get_monitor(0).workarea_rect;
-    this.form.caption = 'Pino';
-    this.form.rect.width = rect.width;
-    this.form.rect.height = rect.height;
-    this.form.visible = true;
-    this.form.on_paint = this.do_on_form_paint;
+    return new Promise(resolve => {
+      this.form = new GuiForm(this);
+      this.on_form_ready = resolve;
+      this.form.on_ready = this.do_on_form_ready;
+      this.form.on_paint = this.do_on_form_paint;
+      const rect = screen.get_monitor(0).workarea_rect;
+      this.form.caption = 'Pino';
+      this.form.rect.width = rect.width;
+      this.form.rect.height = rect.height;
+      this.form.visible = true;
+    });
   }
 
   private do_on_tab_plus_click() {
@@ -45,12 +59,24 @@ export class PinoGui {
     this.pino.active_tab_index_changed(this.tabs.active_tab_index);
   }
 
-  private create_tabs() {
-    this.tabs = new GuiTabs(this.form, this);
-    this.tabs.align = AlignType.alTop;
-    this.tabs.on_tab_plus_click = this.do_on_tab_plus_click;
-    this.tabs.on_tab_move = this.do_on_tab_move;
-    this.tabs.on_tab_click = this.do_on_tab_click;
+  private do_on_tabs_ready() {
+    if (this.on_tabs_ready) {
+      const resolve = this.on_tabs_ready;
+      this.on_tabs_ready = undefined;
+      resolve();
+    }
+  }
+
+  private async create_tabs() {
+    return new Promise(resolve => {
+      this.tabs = new GuiTabs(this.form, this);
+      this.on_tabs_ready = resolve;
+      this.tabs.on_ready = this.do_on_tabs_ready;
+      this.tabs.align = AlignType.alTop;
+      this.tabs.on_tab_plus_click = this.do_on_tab_plus_click;
+      this.tabs.on_tab_move = this.do_on_tab_move;
+      this.tabs.on_tab_click = this.do_on_tab_click;
+    });
   }
 
   private on_view_change_bounds(
@@ -142,26 +168,40 @@ export class PinoGui {
     this.pino.send_key_up(event);
   }
 
+  private do_on_view_ready() {
+    if (this.on_view_ready) {
+      const resolve = this.on_view_ready;
+      this.on_view_ready = undefined;
+      resolve();
+    }
+  }
+
   private create_view() {
-    this.view = new GuiPanel(this.form, this);
-    this.view.align = AlignType.alClient;
-    this.view.visible = true;
-    this.view.on_resize = this.on_view_change_bounds;
-    this.view.on_mouse_wheel = this.do_on_view_mouse_wheel;
-    this.view.on_mouse_down = this.do_on_mouse_down;
-    this.view.on_mouse_up = this.do_on_mouse_up;
-    this.view.on_mouse_move = this.do_on_mouse_move;
-    this.view.on_key_press = this.do_on_key_press;
-    this.view.on_key_down = this.do_on_key_down;
-    this.view.on_key_up = this.do_on_key_up;
+    return new Promise(resolve => {
+      this.view = new GuiPanel(this.form, this);
+      this.on_view_ready = resolve;
+      this.view.on_ready = this.do_on_view_ready;
+      this.view.on_resize = this.on_view_change_bounds;
+      this.view.on_mouse_wheel = this.do_on_view_mouse_wheel;
+      this.view.on_mouse_down = this.do_on_mouse_down;
+      this.view.on_mouse_up = this.do_on_mouse_up;
+      this.view.on_mouse_move = this.do_on_mouse_move;
+      this.view.on_key_press = this.do_on_key_press;
+      this.view.on_key_down = this.do_on_key_down;
+      this.view.on_key_up = this.do_on_key_up;
+      this.view.align = AlignType.alClient;
+      this.view.visible = true;
+    });
   }
 
   constructor(
     private readonly pino: Pino
-  ) {
-    this.create_form();
-    this.create_tabs();
-    this.create_view();
+  ) {}
+
+  async init() {
+    await this.create_form();
+    await this.create_tabs();
+    await this.create_view();
   }
 
   add_tab(): Promise<number> {

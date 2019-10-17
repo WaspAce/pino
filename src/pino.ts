@@ -165,6 +165,12 @@ export class Pino {
     this.create_gui();
   }
 
+  async init() {
+    if (this.gui) {
+      await this.gui.init();
+    }
+  }
+
   get_view_rect(): Rect {
     if (this.gui) {
       return this.gui.view.rect;

@@ -1,14 +1,25 @@
 import { Pino } from './src/pino';
 
-const pino = new Pino({
-  gui: true
-});
+class Test {
+  private pino: Pino;
 
-pino.add_tab().then(tab => {
-  tab.load('https://jigsaw.w3.org/HTTP/Basic/').then(() => {
-  // tab.load('https://yandex.ru').then(() => {
+  constructor() {
+    this.pino = new Pino({
+      gui: true
+    });
+  }
+
+  async go() {
+    await this.pino.init();
+    console.log('inited');
+    const tab = await this.pino.add_tab();
+    console.log('tab added');
+    await tab.load('https://www.youtube.com/watch?v=vuT_bXzhqhY');
     console.log('loaded');
-  });
-});
+  }
+}
 
-export default pino;
+const test = new Test();
+test.go();
+
+export default test;
