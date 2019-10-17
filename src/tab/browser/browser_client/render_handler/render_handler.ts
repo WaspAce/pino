@@ -35,6 +35,13 @@ export class PinoRenderHandler {
     return true;
   }
 
+  private do_on_paint(
+    browser: Browser,
+    images: Image[]
+  ) {
+    this.client.browser.was_painted(images);
+  };
+
   private init_native() {
     this.native = new RenderHandler(this);
     const view_rect = this.client.get_view_rect();
@@ -46,6 +53,7 @@ export class PinoRenderHandler {
     if (this.monitor) {
       this.native.on_get_screen_point = this.do_on_get_screen_point;
     }
+    this.native.on_paint = this.do_on_paint;
   }
 
   constructor(

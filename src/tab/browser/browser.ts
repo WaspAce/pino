@@ -10,11 +10,12 @@ export class PinoBrowser {
   client: PinoBrowserClient;
 
   private host: BrowserHost;
-  private on_subprocess_loaded: (value?: any | PromiseLike<any>) => void;
-  private on_page_loaded: (value?: any | PromiseLike<any>) => void;
-  private on_ipc_message_resolve: (value?: ListValue | PromiseLike<ListValue>) => void;
+  private on_subprocess_loaded: (value?: any) => void;
+  private on_page_loaded: (value?: any) => void;
+  private on_ipc_message_resolve: (value?: ListValue) => void;
   private on_ipc_message_reject: (reason?: any) => void;
   private load_timeout = -1;
+  private on_painted: (images: Image[]) => void;
 
   private init_options() {
     const user_options = this.tab.options.browser;
@@ -334,9 +335,22 @@ export class PinoBrowser {
     );
   }
 
-  invalidate_view() {
+  async invalidate_view(): Promise<Image[]> {
     if (this.host) {
-      this.host.invalidate(PaintElementType.PET_VIEW);
+      return new Promise<Image[]>(resolve => {
+        this.host.invalidate(PaintElementType.PET_VIEW);
+        this.on_painted = resolve;
+      });
+    }
+  }
+
+  was_painted(
+    images: Image[]
+  ) {
+    if (this.on_painted) {
+      const resolve = this.on_painted;
+      this.on_painted = undefined;
+      resolve(images);
     }
   }
 }

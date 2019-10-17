@@ -4,9 +4,10 @@ export class PinoGui {
 
   view: GuiPanel;
   tabs: GuiTabs;
+  img_count = 0;
 
   private form: GuiForm;
-  private on_tab_added: (value?: number | PromiseLike<number>) => void;
+  private on_tab_added: (value?: number) => void;
   private on_form_ready: () => void;
   private on_tabs_ready: () => void;
   private on_view_ready: () => void;

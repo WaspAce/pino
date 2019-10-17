@@ -119,12 +119,14 @@ export class Pino {
     sources.forEach((source, index) => {
       scripts.set_string(index, source);
     });
+    if (subprocess_info.size < SP_INFO_INIT_SCRIPTS_INDEX + 1) {
+      subprocess_info.set_size(SP_INFO_INIT_SCRIPTS_INDEX + 1);
+    }
     subprocess_info.set_list(SP_INFO_INIT_SCRIPTS_INDEX, scripts);
   }
 
   private define_subprocess_info() {
     const info = new ListValue();
-    info.set_size(1);
     this.define_initial_scripts(info);
     CEF_APP.subprocess_info = info;
   }
@@ -273,9 +275,9 @@ export class Pino {
     return this.process_new_tab(result);
   }
 
-  repaint() {
+  async repaint(): Promise<Image[]> {
     if (this.active_tab) {
-      this.active_tab.browser.invalidate_view();
+      return this.active_tab.browser.invalidate_view();
     }
   }
 }

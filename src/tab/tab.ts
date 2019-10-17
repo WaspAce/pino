@@ -9,7 +9,7 @@ export class PinoTab {
   gui_tab_index = -1;
   browser: PinoBrowser;
 
-  private on_initialized: (value?: any | PromiseLike<any>) => void;
+  private on_initialized: (value?: any) => void;
 
   private init_options() {
     const user_options = this.pino.options.tab;
