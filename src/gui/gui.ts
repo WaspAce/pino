@@ -4,7 +4,6 @@ export class PinoGui {
 
   view: GuiPanel;
   tabs: GuiTabs;
-  img_count = 0;
 
   private form: GuiForm;
   private on_tab_added: (value?: number) => void;
