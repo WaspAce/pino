@@ -7,12 +7,13 @@ export class PinoGui {
 
   private form: GuiForm;
   private on_tab_added: (value?: number | PromiseLike<number>) => void;
+  private on_form_ready: () => void;
 
   private do_on_form_paint() {
     this.pino.repaint();
   }
 
-  private create_form() {
+  private async create_form() {
     this.form = new GuiForm(this);
     const rect = screen.get_monitor(0).workarea_rect;
     this.form.caption = 'Pino';
