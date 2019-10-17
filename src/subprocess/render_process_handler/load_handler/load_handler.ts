@@ -8,13 +8,15 @@ export class PinoSubprocessLoadHandler {
   private execute_initial_scripts(
     frame: Frame
   ) {
-    this.render_process_handler.subprocess.initial_scritps.forEach(source => {
-      frame.execute_java_script(
-        source,
-        'http://initial_scripts.wa',
-        0
-      );
-    });
+    if (frame) {
+      this.render_process_handler.subprocess.initial_scritps.forEach(source => {
+        frame.execute_java_script(
+          source,
+          'http://initial_scripts.wa',
+          0
+        );
+      });
+    }
   }
 
   private do_on_load_end(

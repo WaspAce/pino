@@ -332,4 +332,10 @@ export class PinoBrowser {
       0
     );
   }
+
+  invalidate_view() {
+    if (this.host) {
+      this.host.invalidate(PaintElementType.PET_VIEW);
+    }
+  }
 }

@@ -263,4 +263,10 @@ export class Pino {
     const result = new PinoTab(this, true);
     return this.process_new_tab(result);
   }
+
+  repaint() {
+    if (this.active_tab) {
+      this.active_tab.browser.invalidate_view();
+    }
+  }
 }

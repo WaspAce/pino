@@ -8,6 +8,10 @@ export class PinoGui {
   private form: GuiForm;
   private on_tab_added: (value?: number | PromiseLike<number>) => void;
 
+  private do_on_form_paint() {
+    this.pino.repaint();
+  }
+
   private create_form() {
     this.form = new GuiForm(this);
     const rect = screen.get_monitor(0).workarea_rect;
@@ -15,6 +19,7 @@ export class PinoGui {
     this.form.rect.width = rect.width;
     this.form.rect.height = rect.height;
     this.form.visible = true;
+    this.form.on_paint = this.do_on_form_paint;
   }
 
   private do_on_tab_plus_click() {
