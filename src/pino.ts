@@ -25,6 +25,10 @@ export class Pino {
 
   private active_tab: PinoTab;
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();
+  private default_scripts = [
+    loader.load_from_file('assets://jquery.min.js'),
+    loader.load_from_file('assets://misc.js')
+  ];
 
   private get_default_rect() {
     const result = new Rect();
@@ -110,12 +114,11 @@ export class Pino {
     subprocess_info: ListValue
   ) {
     const scripts = new ListValue();
-    if (this.options.initial_scripts && this.options.initial_scripts.length > 0) {
-      scripts.set_size(this.options.initial_scripts.length);
-      this.options.initial_scripts.forEach((source, index) => {
-        scripts.set_string(index, source);
-      });
-    }
+    const sources = this.default_scripts.concat(this.options.initial_scripts);
+    scripts.set_size(sources.length);
+    sources.forEach((source, index) => {
+      scripts.set_string(index, source);
+    });
     subprocess_info.set_list(SP_INFO_INIT_SCRIPTS_INDEX, scripts);
   }
 
