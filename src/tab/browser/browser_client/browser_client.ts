@@ -1,6 +1,6 @@
 import { PinoLoadHandler } from './load_handler/load_handler';
 import { PinoBrowser } from './../browser';
-import { IPC_PAGE_LOADED } from './../../../subprocess/subprocess_types';
+import { IPC_PAGE_LOADED } from '../../../pino_consts';
 import { PinoRequestHandler } from './request_handler/request_handler';
 import { PinoDisplayHandler } from './display_handler/display_handler';
 import { PinoLifeSpanHandler } from './life_span_handler/life_span_handler';

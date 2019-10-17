@@ -1,5 +1,5 @@
 import { UrlFilter } from './tab/browser/browser_client/browser_client_types';
-import { SP_INFO_INIT_SCRIPTS_INDEX } from './subprocess/subprocess_types';
+import { SP_INFO_INIT_SCRIPTS_INDEX, DEFAULT_USER_AGENT } from './pino_consts';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
 import { PinoOptions } from './pino_types';
@@ -59,7 +59,7 @@ export class Pino {
       },
       app_loop_interval_ms: 5,
       gui_loop_interval_ms: 5,
-      user_agent: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Safari/537.36',
+      user_agent: DEFAULT_USER_AGENT,
       load_timeout_ms: 30000
     };
     if (!user_options) {

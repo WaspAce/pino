@@ -2,6 +2,7 @@ import { PinoBrowserClient } from './browser_client/browser_client';
 import { PinoBrowserOptions } from './browser_types';
 import { PinoTab } from '../tab';
 import { URI } from '../../uri/uri';
+import { IPC_TRANSFER_DATA_FUN_NAME, IPC_EXCEPTION_FUN_NAME, URL_DEFAULT_SCRIPT, URL_BLANK_PAGE } from '../../pino_consts';
 
 export class PinoBrowser {
   options: PinoBrowserOptions;
@@ -41,7 +42,7 @@ export class PinoBrowser {
       const browser = new Browser(
         window_info,
         this.client.native,
-        'about:blank',
+        URL_BLANK_PAGE,
         settings
       );
     }
@@ -233,12 +234,12 @@ export class PinoBrowser {
   process_message_received(
     message: ProcessMessage
   ) {
-    if (message.name === 'transfer_data' && this.on_ipc_message_resolve) {
+    if (message.name === IPC_TRANSFER_DATA_FUN_NAME && this.on_ipc_message_resolve) {
       this.on_ipc_message_reject = undefined;
       const resolve = this.on_ipc_message_resolve;
       this.on_ipc_message_resolve = undefined;
       resolve(message.get_argument_list());
-    } else if (message.name === 'js_exception' && this.on_ipc_message_reject) {
+    } else if (message.name === IPC_EXCEPTION_FUN_NAME && this.on_ipc_message_reject) {
       const error = message.get_argument_list().get_string(0);
       this.reject_ipc_message(`IPC exception: ${error}`);
     }
@@ -309,7 +310,7 @@ export class PinoBrowser {
         this.on_ipc_message_reject = reject;
         this.native.get_main_frame().execute_java_script(
           this.wrap_js_code(code),
-          'http://custom_js.wa',
+          URL_DEFAULT_SCRIPT,
           0
         );
         if (timeout_ms && timeout_ms > 0) {
@@ -328,7 +329,7 @@ export class PinoBrowser {
   ) {
     this.native.get_main_frame().execute_java_script(
       this.wrap_js_code(code),
-      'http://custom_js.wa',
+      URL_DEFAULT_SCRIPT,
       0
     );
   }

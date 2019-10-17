@@ -1,6 +1,6 @@
 import { PinoSubprocessLoadHandler } from './load_handler/load_handler';
 import { PinoSubprocessV8Extension } from './v8_extension/v8_extension';
-import { SP_INFO_INIT_SCRIPTS_INDEX } from './../subprocess_types';
+import { SP_INFO_INIT_SCRIPTS_INDEX } from '../../pino_consts';
 import { PinoSubprocess } from '../subprocess';
 
 export class PinoSubprocessRenderProcessHandler {

@@ -1,4 +1,4 @@
-import { IPC_PAGE_LOADED } from '../../subprocess_types';
+import { IPC_PAGE_LOADED, URL_DEFAULT_SCRIPT } from '../../../pino_consts';
 import { PinoSubprocessRenderProcessHandler } from '../render_process_handler';
 
 export class PinoSubprocessLoadHandler {
@@ -12,7 +12,7 @@ export class PinoSubprocessLoadHandler {
       this.render_process_handler.subprocess.initial_scritps.forEach(source => {
         frame.execute_java_script(
           source,
-          'http://initial_scripts.wa',
+          URL_DEFAULT_SCRIPT,
           0
         );
       });
