@@ -40,7 +40,7 @@ export class PinoRenderHandler {
     images: Image[]
   ) {
     this.client.browser.was_painted(images);
-  };
+  }
 
   private init_native() {
     this.native = new RenderHandler(this);
@@ -49,7 +49,7 @@ export class PinoRenderHandler {
     this.native.root_screen_rect.copy_from(view_rect);
     this.native.view_rect = new Rect();
     this.native.view_rect.copy_from(view_rect);
-    this.native.screen_info = this.client.get_screen_info();
+    this.native.screen_info = this.client.browser.tab.pino.screen.screen_info;
     if (this.monitor) {
       this.native.on_get_screen_point = this.do_on_get_screen_point;
     }

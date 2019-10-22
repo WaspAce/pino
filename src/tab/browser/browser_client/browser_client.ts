@@ -92,10 +92,6 @@ export class PinoBrowserClient {
     this.browser.page_loaded();
   }
 
-  get_screen_info(): ScreenInfo {
-    return this.browser.get_screen_info();
-  }
-
   get_view_rect(): Rect {
     return this.browser.get_view_rect();
   }

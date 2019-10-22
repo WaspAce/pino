@@ -113,10 +113,6 @@ export class PinoTab {
     }
   }
 
-  get_screen_info(): ScreenInfo {
-    return this.pino.screen_info;
-  }
-
   get_view_rect(): Rect {
     return this.pino.get_view_rect();
   }

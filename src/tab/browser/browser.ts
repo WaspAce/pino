@@ -150,10 +150,6 @@ export class PinoBrowser {
     }
   }
 
-  get_screen_info(): ScreenInfo {
-    return this.tab.get_screen_info();
-  }
-
   get_view_rect(): Rect {
     return this.tab.get_view_rect();
   }
@@ -351,6 +347,12 @@ export class PinoBrowser {
       const resolve = this.on_painted;
       this.on_painted = undefined;
       resolve(images);
+    }
+  }
+
+  notify_screen_info_changed() {
+    if (this.host) {
+      this.host.notify_screen_info_changed();
     }
   }
 }

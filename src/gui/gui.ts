@@ -1,4 +1,5 @@
 import { Pino } from '../pino';
+import { PinoScreen } from '../screen/screen';
 
 export class PinoGui {
 
@@ -209,5 +210,13 @@ export class PinoGui {
       this.on_tab_added = resolve;
       this.tabs.add_tab(-1, '');
     });
+  }
+
+  screen_changed() {
+    this.form.rect.copy_from(this.screen.screen_info.available_rect);
+  }
+
+  get screen(): PinoScreen {
+    return this.pino.screen;
   }
 }

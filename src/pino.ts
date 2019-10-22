@@ -3,10 +3,11 @@ import { SP_INFO_INIT_SCRIPTS_INDEX, DEFAULT_USER_AGENT } from './pino_consts';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
 import { PinoOptions } from './pino_types';
+import { PinoScreen } from './screen/screen';
 
 export class Pino {
 
-  screen_info: ScreenInfo;
+  screen = new PinoScreen(this);
   options: PinoOptions;
   gui: PinoGui;
   url_filter: UrlFilter;
@@ -77,33 +78,6 @@ export class Pino {
     this.options.tab.load_timeout_ms = this.options.load_timeout_ms;
   }
 
-  private init_screen_info() {
-    this.screen_info = new ScreenInfo();
-    let monitor: Monitor;
-    const default_rect = this.get_default_rect();
-    if (this.options.gui) {
-      monitor = screen.get_monitor(0);
-    }
-    if (this.options.screen && this.options.screen.rect){
-      this.screen_info.rect.copy_from(this.options.screen.rect);
-    } else if (this.options.gui) {
-      this.screen_info.rect.copy_from(monitor.bounds_rect);
-    } else {
-      this.screen_info.rect.copy_from(default_rect);
-    }
-    if (this.options.screen && this.options.screen.available_rect){
-      this.screen_info.available_rect.copy_from(this.options.screen.available_rect);
-    } else if (this.options.gui) {
-      this.screen_info.available_rect.copy_from(monitor.workarea_rect);
-    } else {
-      this.screen_info.available_rect.copy_from(default_rect);
-    }
-    this.screen_info.depth = this.options.screen.color_depth;
-    this.screen_info.depth_per_component = this.options.screen.color_depth;
-    this.screen_info.device_scale_factor = this.options.screen.device_scale_factor;
-    this.screen_info.is_monochrome = this.options.screen.is_monochrome;
-  }
-
   private create_gui() {
     if (this.options.gui) {
       this.gui = new PinoGui(this);
@@ -165,7 +139,6 @@ export class Pino {
     user_options: PinoOptions
   ) {
     this.init_options(user_options);
-    this.init_screen_info();
     this.init_app();
     this.create_gui();
   }
@@ -279,5 +252,14 @@ export class Pino {
     if (this.active_tab) {
       return this.active_tab.browser.invalidate_view();
     }
+  }
+
+  screen_changed() {
+    if (this.gui) {
+      this.gui.screen_changed();
+    }
+    this.tabs_by_gui_tab_index.forEach(tab => {
+      tab.browser.notify_screen_info_changed();
+    });
   }
 }
