@@ -1,16 +1,12 @@
-import { UrlFilter } from './tab/browser/browser_client/browser_client_types';
 import { SP_INFO_INIT_SCRIPTS_INDEX, DEFAULT_USER_AGENT } from './pino_consts';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
-import { PinoOptions } from './pino_types';
 import { PinoScreen } from './screen/screen';
 
 export class Pino {
 
   screen = new PinoScreen(this);
-  options: PinoOptions;
   gui: PinoGui;
-  url_filter: UrlFilter;
   on_get_auth_credentials: (
     browser: Browser,
     origin_url: string,
@@ -23,6 +19,12 @@ export class Pino {
     username: string;
     password: string
   };
+
+  frame_rate = 30;
+  load_timeout_ms = 20000;
+  initial_scripts: string[] = [];
+  user_agent = '';
+  block_subframes = false;
 
   private active_tab: PinoTab;
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();
@@ -40,55 +42,15 @@ export class Pino {
     return result;
   }
 
-  private init_options(
-    user_options: PinoOptions
-  ) {
-    const default_rect = this.get_default_rect();
-    const default_options: PinoOptions = {
-      gui: false,
-      view_rect: default_rect,
-      screen: {
-        color_depth: 24,
-        device_scale_factor: 1,
-        is_monochrome: false,
-        rect: default_rect,
-        available_rect: default_rect
-      },
-      tab: {
-        browser: {
-          client: {
-            render_handler: {
-            }
-          }
-        }
-      },
-      app_loop_interval_ms: 5,
-      gui_loop_interval_ms: 5,
-      user_agent: DEFAULT_USER_AGENT,
-      load_timeout_ms: 30000
-    };
-    if (!user_options) {
-      this.options = default_options;
-    } else {
-      this.options = Object.assign(default_options, user_options);
-    }
-    if (this.options.gui) {
-      this.options.tab.browser.client.render_handler.use_monitor = true;
-    }
-    this.options.tab.load_timeout_ms = this.options.load_timeout_ms;
-  }
-
   private create_gui() {
-    if (this.options.gui) {
-      this.gui = new PinoGui(this);
-    }
+    this.gui = new PinoGui(this);
   }
 
   private define_initial_scripts(
     subprocess_info: ListValue
   ) {
     const scripts = new ListValue();
-    const sources = this.default_scripts.concat(this.options.initial_scripts);
+    const sources = this.default_scripts.concat(this.initial_scripts);
     scripts.set_size(sources.length);
     sources.forEach((source, index) => {
       scripts.set_string(index, source);
@@ -109,9 +71,11 @@ export class Pino {
     CEF_APP.subprocess_source = './subprocess/subprocess.js';
     this.define_subprocess_info();
     CEF_APP.init();
-    CEF_APP.loop_interval_ms = this.options.app_loop_interval_ms;
-    CEF_APP.settings.user_agent = this.options.user_agent;
-    system.gui_loop_interval_ms = this.options.gui_loop_interval_ms;
+    CEF_APP.loop_interval_ms = this.app_loop_interval_ms;
+    if (this.user_agent !== '') {
+      CEF_APP.settings.user_agent = this.user_agent;
+    }
+    system.gui_loop_interval_ms = this.gui_loop_interval_ms;
   }
 
   private async process_new_tab(
@@ -136,24 +100,21 @@ export class Pino {
   }
 
   constructor(
-    user_options: PinoOptions
+    gui?: boolean,
+    initial_scripts?: string[]
   ) {
-    this.init_options(user_options);
+    if (initial_scripts) {
+      this.initial_scripts = initial_scripts;
+    }
     this.init_app();
-    this.create_gui();
+    if (gui) {
+      this.create_gui();
+    }
   }
 
   async init() {
     if (this.gui) {
       await this.gui.init();
-    }
-  }
-
-  get_view_rect(): Rect {
-    if (this.gui) {
-      return this.gui.view.rect;
-    } else {
-      return this.options.view_rect;
     }
   }
 
@@ -261,5 +222,25 @@ export class Pino {
     this.tabs_by_gui_tab_index.forEach(tab => {
       tab.browser.notify_screen_info_changed();
     });
+  }
+
+  get app_loop_interval_ms(): number {
+    return CEF_APP.loop_interval_ms;
+  }
+
+  set app_loop_interval_ms(
+    value: number
+  ) {
+    CEF_APP.loop_interval_ms = value;
+  }
+
+  get gui_loop_interval_ms(): number {
+    return system.gui_loop_interval_ms;
+  }
+
+  set gui_loop_interval_ms(
+    value: number
+  ) {
+    system.gui_loop_interval_ms = value;
   }
 }

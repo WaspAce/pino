@@ -1,3 +1,4 @@
+import { Pino } from './../../../../pino';
 import { PinoBrowserClient } from '../browser_client';
 
 export class PinoRequestHandler {
@@ -11,7 +12,7 @@ export class PinoRequestHandler {
     user_gesture: boolean,
     is_redirect: boolean
   ): boolean {
-    if (this.client.browser.tab.pino.options.block_subframes && !frame.is_main) {
+    if (this.pino.block_subframes && !frame.is_main) {
       return true;
     }
     return false;
@@ -54,5 +55,9 @@ export class PinoRequestHandler {
     readonly client: PinoBrowserClient
   ) {
     this.init_native();
+  }
+
+  get pino(): Pino {
+    return this.client.pino;
   }
 }

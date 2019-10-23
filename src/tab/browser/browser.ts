@@ -1,11 +1,10 @@
+import { Pino } from './../../pino';
 import { PinoBrowserClient } from './browser_client/browser_client';
-import { PinoBrowserOptions } from './browser_types';
 import { PinoTab } from '../tab';
 import { URI } from '../../uri/uri';
 import { IPC_TRANSFER_DATA_FUN_NAME, IPC_EXCEPTION_FUN_NAME, URL_DEFAULT_SCRIPT, URL_BLANK_PAGE } from '../../pino_consts';
 
 export class PinoBrowser {
-  options: PinoBrowserOptions;
   native: Browser;
   client: PinoBrowserClient;
 
@@ -17,19 +16,6 @@ export class PinoBrowser {
   private load_timeout = -1;
   private on_painted: (images: Image[]) => void;
 
-  private init_options() {
-    const user_options = this.tab.options.browser;
-    const default_options: PinoBrowserOptions = {
-      frame_rate: 30,
-      load_timeout_ms: 20000
-    };
-    if (!user_options) {
-      this.options = default_options;
-    } else {
-      this.options = Object.assign(default_options, user_options);
-    }
-  }
-
   private init_client() {
     this.client = new PinoBrowserClient(this);
   }
@@ -38,7 +24,7 @@ export class PinoBrowser {
     if (this.create_browser) {
       const window_info = new WindowInfo();
       const settings = new BrowserSettings();
-      settings.frame_rate = this.options.frame_rate;
+      settings.frame_rate = this.pino.frame_rate;
 
       const browser = new Browser(
         window_info,
@@ -59,7 +45,7 @@ export class PinoBrowser {
       this.page_loaded();
       this.subprocess_loaded();
     },
-    this.options.load_timeout_ms);
+    this.pino.load_timeout_ms);
   }
 
   private wrap_js_code(
@@ -121,7 +107,6 @@ export class PinoBrowser {
     readonly tab: PinoTab,
     private readonly create_browser?: boolean
   ) {
-    this.init_options();
     this.init_client();
     this.init_browser();
   }
@@ -148,10 +133,6 @@ export class PinoBrowser {
       this.on_page_loaded = undefined;
       resolve();
     }
-  }
-
-  get_view_rect(): Rect {
-    return this.tab.get_view_rect();
   }
 
   add_draw_target(
@@ -354,5 +335,9 @@ export class PinoBrowser {
     if (this.host) {
       this.host.notify_screen_info_changed();
     }
+  }
+
+  get pino(): Pino {
+    return this.tab.pino;
   }
 }

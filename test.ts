@@ -4,9 +4,9 @@ class Test {
   private pino: Pino;
 
   constructor() {
-    this.pino = new Pino({
-      gui: true
-    });
+    this.pino = new Pino(
+      true
+    );
   }
 
   async go() {

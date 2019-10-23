@@ -1,28 +1,13 @@
 import { PinoBrowser } from './browser/browser';
-import { PinoTabOptions } from './tab_types';
 import { Pino } from '../pino';
 
 export class PinoTab {
 
   screen_info: ScreenInfo;
-  options: PinoTabOptions;
   gui_tab_index = -1;
   browser: PinoBrowser;
 
   private on_initialized: (value?: any) => void;
-
-  private init_options() {
-    const user_options = this.pino.options.tab;
-    const default_options: PinoTabOptions = {
-      load_timeout_ms: 30000
-    };
-    if (!user_options) {
-      this.options = default_options;
-    } else {
-      this.options = Object.assign(default_options, user_options);
-    }
-    this.options.browser.load_timeout_ms = this.options.load_timeout_ms;
-  }
 
   private create_browser(
     create_browser: boolean
@@ -42,7 +27,6 @@ export class PinoTab {
     readonly pino: Pino,
     create_browser?: boolean
   ) {
-    this.init_options();
     this.create_browser(create_browser);
   }
 
@@ -111,10 +95,6 @@ export class PinoTab {
     if (this.browser) {
       this.browser.send_key_up(event);
     }
-  }
-
-  get_view_rect(): Rect {
-    return this.pino.get_view_rect();
   }
 
   browser_created() {

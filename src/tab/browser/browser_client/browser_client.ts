@@ -1,14 +1,13 @@
+import { Pino } from './../../../pino';
 import { PinoLoadHandler } from './load_handler/load_handler';
 import { PinoBrowser } from './../browser';
 import { IPC_PAGE_LOADED } from '../../../pino_consts';
 import { PinoRequestHandler } from './request_handler/request_handler';
 import { PinoDisplayHandler } from './display_handler/display_handler';
 import { PinoLifeSpanHandler } from './life_span_handler/life_span_handler';
-import { PinoBrowserClientOptions } from './browser_client_types';
 import { PinoRenderHandler } from './render_handler/render_handler';
 
 export class PinoBrowserClient {
-  options: PinoBrowserClientOptions;
   native: BrowserClient;
 
   private render_handler: PinoRenderHandler;
@@ -16,16 +15,6 @@ export class PinoBrowserClient {
   private display_handler: PinoDisplayHandler;
   private request_handler: PinoRequestHandler;
   private load_handler: PinoLoadHandler;
-
-  private init_options() {
-    const user_options = this.browser.options.client;
-    const default_options: PinoBrowserClientOptions = {};
-    if (!user_options) {
-      this.options = default_options;
-    } else {
-      this.options = Object.assign(default_options, user_options);
-    }
-  }
 
   private create_render_handler() {
     this.render_handler = new PinoRenderHandler(this);
@@ -78,7 +67,6 @@ export class PinoBrowserClient {
   constructor(
     readonly browser: PinoBrowser
   ) {
-    this.init_options();
     this.create_client();
   }
 
@@ -92,10 +80,6 @@ export class PinoBrowserClient {
     this.browser.page_loaded();
   }
 
-  get_view_rect(): Rect {
-    return this.browser.get_view_rect();
-  }
-
   add_draw_target(
     target: GuiPanel
   ) {
@@ -106,5 +90,9 @@ export class PinoBrowserClient {
     view_rect: Rect
   ) {
     this.render_handler.was_resized(view_rect);
+  }
+
+  get pino(): Pino {
+    return this.browser.pino;
   }
 }
