@@ -141,13 +141,10 @@ export class PinoBrowser {
     this.client.add_draw_target(target);
   }
 
-  was_resized(
-    view_rect: Rect
-  ) {
+  was_resized() {
     if (this.host) {
       this.host.was_resized();
     }
-    this.client.was_resized(view_rect);
   }
 
   send_mouse_wheel_event(
@@ -182,6 +179,14 @@ export class PinoBrowser {
   ) {
     if (this.host) {
       this.host.send_mouse_move_event(event, false);
+    }
+  }
+
+  send_touch_event(
+    event: TouchEvent
+  ) {
+    if (this.host) {
+      this.host.send_touch_event(event);
     }
   }
 

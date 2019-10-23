@@ -1,11 +1,10 @@
-import { SP_INFO_INIT_SCRIPTS_INDEX, DEFAULT_USER_AGENT } from './pino_consts';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
 import { PinoScreen } from './screen/screen';
 
 export class Pino {
 
-  screen = new PinoScreen(this);
+  screen: PinoScreen;
   gui: PinoGui;
   on_get_auth_credentials: (
     browser: Browser,
@@ -22,60 +21,14 @@ export class Pino {
 
   frame_rate = 30;
   load_timeout_ms = 20000;
-  initial_scripts: string[] = [];
-  user_agent = '';
   block_subframes = false;
+  is_mobile = false;
 
   private active_tab: PinoTab;
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();
-  private default_scripts = [
-    loader.load_from_file('assets://jquery.min.js'),
-    loader.load_from_file('assets://misc.js')
-  ];
-
-  private get_default_rect() {
-    const result = new Rect();
-    result.x = 0;
-    result.y = 0;
-    result.width = 1920;
-    result.height = 1080;
-    return result;
-  }
 
   private create_gui() {
     this.gui = new PinoGui(this);
-  }
-
-  private define_initial_scripts(
-    subprocess_info: ListValue
-  ) {
-    const scripts = new ListValue();
-    const sources = this.default_scripts.concat(this.initial_scripts);
-    scripts.set_size(sources.length);
-    sources.forEach((source, index) => {
-      scripts.set_string(index, source);
-    });
-    if (subprocess_info.size < SP_INFO_INIT_SCRIPTS_INDEX + 1) {
-      subprocess_info.set_size(SP_INFO_INIT_SCRIPTS_INDEX + 1);
-    }
-    subprocess_info.set_list(SP_INFO_INIT_SCRIPTS_INDEX, scripts);
-  }
-
-  private define_subprocess_info() {
-    const info = new ListValue();
-    this.define_initial_scripts(info);
-    CEF_APP.subprocess_info = info;
-  }
-
-  private init_app() {
-    CEF_APP.subprocess_source = './subprocess/subprocess.js';
-    this.define_subprocess_info();
-    CEF_APP.init();
-    CEF_APP.loop_interval_ms = this.app_loop_interval_ms;
-    if (this.user_agent !== '') {
-      CEF_APP.settings.user_agent = this.user_agent;
-    }
-    system.gui_loop_interval_ms = this.gui_loop_interval_ms;
   }
 
   private async process_new_tab(
@@ -100,30 +53,26 @@ export class Pino {
   }
 
   constructor(
-    gui?: boolean,
-    initial_scripts?: string[]
+    gui?: boolean
   ) {
-    if (initial_scripts) {
-      this.initial_scripts = initial_scripts;
-    }
-    this.init_app();
     if (gui) {
       this.create_gui();
     }
   }
 
   async init() {
+    if (!this.screen) {
+      this.screen = new PinoScreen();
+    }
     if (this.gui) {
       await this.gui.init();
     }
   }
 
-  view_resized(
-    view_rect: Rect
-  ): void {
-    if (this.active_tab) {
-      this.active_tab.view_resized(view_rect);
-    }
+  view_resized(): void {
+    this.tabs_by_gui_tab_index.forEach(tab => {
+      tab.view_resized();
+    });
   }
 
   active_tab_index_changed(
@@ -171,6 +120,14 @@ export class Pino {
   ) {
     if (this.active_tab) {
       this.active_tab.send_mouse_move_event(event);
+    }
+  }
+
+  send_touch_event(
+    event: TouchEvent
+  ) {
+    if (this.active_tab) {
+      this.active_tab.send_touch_event(event);
     }
   }
 
@@ -222,25 +179,5 @@ export class Pino {
     this.tabs_by_gui_tab_index.forEach(tab => {
       tab.browser.notify_screen_info_changed();
     });
-  }
-
-  get app_loop_interval_ms(): number {
-    return CEF_APP.loop_interval_ms;
-  }
-
-  set app_loop_interval_ms(
-    value: number
-  ) {
-    CEF_APP.loop_interval_ms = value;
-  }
-
-  get gui_loop_interval_ms(): number {
-    return system.gui_loop_interval_ms;
-  }
-
-  set gui_loop_interval_ms(
-    value: number
-  ) {
-    system.gui_loop_interval_ms = value;
   }
 }

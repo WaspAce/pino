@@ -38,7 +38,6 @@ export class PinoSubprocessLoadHandler {
       frame_ids.forEach(id => {
         this.execute_initial_scripts(browser.get_frame_by_identifier(id));
       });
-      this.execute_initial_scripts(browser.get_main_frame());
       const message = new ProcessMessage(IPC_PAGE_LOADED);
       browser.get_main_frame().send_process_message(ProcessId.PID_BROWSER, message);
     }

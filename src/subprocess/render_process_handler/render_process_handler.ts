@@ -9,6 +9,10 @@ export class PinoSubprocessRenderProcessHandler {
 
   private extension: PinoSubprocessV8Extension;
   private load_handler: PinoSubprocessLoadHandler;
+  private default_scripts = [
+    loader.load_from_file('assets://jquery.min.js'),
+    loader.load_from_file('assets://misc.js')
+  ];
 
   private define_initial_scripts(
     subprocess_info: ListValue
@@ -21,6 +25,7 @@ export class PinoSubprocessRenderProcessHandler {
         }
       }
     }
+    this.subprocess.initial_scritps = this.default_scripts.concat(this.subprocess.initial_scritps);
   }
 
   private do_on_render_thread_created(

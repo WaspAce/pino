@@ -86,12 +86,6 @@ export class PinoBrowserClient {
     this.render_handler.add_draw_target(target);
   }
 
-  was_resized(
-    view_rect: Rect
-  ) {
-    this.render_handler.was_resized(view_rect);
-  }
-
   get pino(): Pino {
     return this.browser.pino;
   }

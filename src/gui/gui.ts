@@ -83,7 +83,7 @@ export class PinoGui {
   private on_view_change_bounds(
     rect: Rect
   ) {
-    this.pino.view_resized(rect);
+    this.pino.view_resized();
   }
 
   private do_on_view_mouse_wheel(
@@ -105,11 +105,22 @@ export class PinoGui {
     y: number,
     modifiers: EventFlags[]
   ) {
-    const event = new MouseEvent();
-    event.modifiers = modifiers;
-    event.x = x;
-    event.y = y;
-    this.pino.send_mouse_down_event(event, button_type);
+    if (this.pino.is_mobile) {
+      const event = new TouchEvent();
+      event.id = 1;
+      event.modifiers = modifiers;
+      event.pointer_type = PointerType.CEF_POINTER_TYPE_TOUCH;
+      event.type_ = TouchEventType.CEF_TET_PRESSED;
+      event.x = x;
+      event.y = y;
+      this.pino.send_touch_event(event);
+    } else {
+      const event = new MouseEvent();
+      event.modifiers = modifiers;
+      event.x = x;
+      event.y = y;
+      this.pino.send_mouse_down_event(event, button_type);
+    }
   }
 
   private do_on_mouse_up(
@@ -118,11 +129,22 @@ export class PinoGui {
     y: number,
     modifiers: EventFlags[]
   ) {
-    const event = new MouseEvent();
-    event.modifiers = modifiers;
-    event.x = x;
-    event.y = y;
-    this.pino.send_mouse_up_event(event, button_type);
+    if (this.pino.is_mobile) {
+      const event = new TouchEvent();
+      event.id = 1;
+      event.modifiers = modifiers;
+      event.pointer_type = PointerType.CEF_POINTER_TYPE_TOUCH;
+      event.type_ = TouchEventType.CEF_TET_RELEASED;
+      event.x = x;
+      event.y = y;
+      this.pino.send_touch_event(event);
+    } else {
+      const event = new MouseEvent();
+      event.modifiers = modifiers;
+      event.x = x;
+      event.y = y;
+      this.pino.send_mouse_up_event(event, button_type);
+    }
   }
 
   private do_on_mouse_move(
@@ -130,11 +152,22 @@ export class PinoGui {
     y: number,
     modifiers: EventFlags[]
   ) {
-    const event = new MouseEvent();
-    event.modifiers = modifiers;
-    event.x = x;
-    event.y = y;
-    this.pino.send_mouse_move_event(event);
+    if (this.pino.is_mobile) {
+      const event = new TouchEvent();
+      event.id = 1;
+      event.modifiers = modifiers;
+      event.pointer_type = PointerType.CEF_POINTER_TYPE_TOUCH;
+      event.type_ = TouchEventType.CEF_TET_MOVED;
+      event.x = x;
+      event.y = y;
+      this.pino.send_touch_event(event);
+    } else {
+      const event = new MouseEvent();
+      event.modifiers = modifiers;
+      event.x = x;
+      event.y = y;
+      this.pino.send_mouse_move_event(event);
+    }
   }
 
   private do_on_key_press(
@@ -192,6 +225,9 @@ export class PinoGui {
       this.view.on_key_up = this.do_on_key_up;
       this.view.align = AlignType.alClient;
       this.view.visible = true;
+      if (!this.pino.screen.is_default) {
+        this.view.rect.copy_from(this.screen.view_rect);
+      }
     });
   }
 

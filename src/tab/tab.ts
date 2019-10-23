@@ -30,11 +30,9 @@ export class PinoTab {
     this.create_browser(create_browser);
   }
 
-  view_resized(
-    view_rect: Rect
-  ): void {
+  view_resized(): void {
     if (this.browser) {
-      this.browser.was_resized(view_rect);
+      this.browser.was_resized();
     }
   }
 
@@ -70,6 +68,14 @@ export class PinoTab {
   ) {
     if (this.browser) {
       this.browser.send_mouse_move_event(event);
+    }
+  }
+
+  send_touch_event(
+    event: TouchEvent
+  ) {
+    if (this.browser) {
+      this.browser.send_touch_event(event);
     }
   }
 

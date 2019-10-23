@@ -57,12 +57,6 @@ export class PinoRenderHandler {
     this.native.add_draw_targets([target]);
   }
 
-  was_resized(
-    view_rect: Rect
-  ) {
-    this.native.view_rect.copy_from(view_rect);
-  }
-
   get pino(): Pino {
     return this.client.pino;
   }

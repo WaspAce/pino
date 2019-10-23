@@ -1,9 +1,9 @@
-import { Pino } from './../pino';
 export class PinoScreen {
 
   screen_info: ScreenInfo;
   root_screen_rect: Rect;
   view_rect: Rect;
+  is_default = true;
 
   private default_rect: Rect;
 
@@ -33,9 +33,7 @@ export class PinoScreen {
     this.screen_info.is_monochrome = false;
   }
 
-  constructor(
-    private readonly pino: Pino
-  ) {
+  constructor() {
     this.create_default_rect();
     this.init_rects();
     this.init_screen_info();
