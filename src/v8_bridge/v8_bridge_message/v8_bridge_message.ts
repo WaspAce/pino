@@ -5,6 +5,7 @@ export enum V8BridgeAction {
   MAIN_GET_PROPERTY,
   MAIN_SET_PROPERTY,
   MAIN_CALL_METHOD,
+  MAIN_EVAL_AND_WAIT_DATA,
 
   NOT_SET,
 

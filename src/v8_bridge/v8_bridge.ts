@@ -1,3 +1,4 @@
+import { PinoV8Extension } from './../subprocess/render_process_handler/v8_extension/v8_extension';
 import { PinoFrame } from './../tab/browser/frame/frame';
 import { PinoV8GetPropertyOptions, PinoV8SetPropertyOptions, PinoV8CallMethodOptions } from './v8_payload_types';
 import { PinoV8Proxy } from './v8_proxy/v8_proxy';
@@ -15,7 +16,7 @@ interface BridgeResponseResolver {
 let last_message_id = 0;
 const response_resolvers_by_id = new Map<number, BridgeResponseResolver>();
 
-const V8BRIDGE_RESPONE_TIMEOUT_MS = 1000;
+export const V8BRIDGE_RESPONE_TIMEOUT_MS = 1000;
 
 export class PinoV8Bridge {
 
@@ -241,8 +242,41 @@ export class PinoV8Bridge {
     this.frame.send_process_message(ProcessId.PID_BROWSER, response.native);
   }
 
+  private async eval_code_and_wait_data(
+    code: string,
+    extension: PinoV8Extension,
+    message_id: number
+  ): Promise<PinoV8BridgeMessage> {
+    return new Promise(resolve => {
+      if (!this.context.is_valid) {
+        resolve(this.get_invalid_context_response());
+      }
+      extension.wait_for_data(this.frame.identifier).then(value => {
+        resolve(this.get_value_response(value, message_id));
+      });
+      const eval_result = this.context.eval(code);
+      if (eval_result.result) {
+        // 
+      } else if (eval_result.exception) {
+        resolve(this.get_exception_response(eval_result.exception));
+      } else {
+        resolve(this.get_undefined_error_response());
+      }
+    });
+  }
+
+  private async sub_process_eval_and_wait_data(
+    bridge_message: PinoV8BridgeMessage,
+    extension: PinoV8Extension
+  ) {
+    const response = await this.eval_code_and_wait_data(bridge_message.payload, extension, bridge_message.identifier);
+    response.identifier = bridge_message.identifier;
+    this.frame.send_process_message(ProcessId.PID_BROWSER, response.native);
+  }
+
   private sub_process_message_from_main(
-    bridge_message: PinoV8BridgeMessage
+    bridge_message: PinoV8BridgeMessage,
+    extension: PinoV8Extension
   ) {
     switch (bridge_message.action) {
       case V8BridgeAction.MAIN_EXECUTE_CODE:
@@ -256,6 +290,9 @@ export class PinoV8Bridge {
         break;
       case V8BridgeAction.MAIN_CALL_METHOD:
         this.sub_process_call_method(bridge_message);
+        break;
+      case V8BridgeAction.MAIN_EVAL_AND_WAIT_DATA:
+        this.sub_process_eval_and_wait_data(bridge_message, extension);
         break;
       default:
         break;
@@ -296,53 +333,10 @@ export class PinoV8Bridge {
     }
   }
 
-  constructor(
-    readonly frame: Frame
-  ) {
-    if (system.is_subprocess) {
-      this.context = new PinoV8context(this.frame.get_v8_context());
-      this.pool = new PinoV8Pool(this.context);
-    }
-  }
-
-  async send_message(
-    message: PinoV8BridgeMessage,
-  ): Promise<PinoV8BridgeMessage> {
-    return new Promise<PinoV8BridgeMessage>(resolve => {
-      message.identifier = ++last_message_id;
-      const resolver: BridgeResponseResolver = {
-        resolve
-      };
-      response_resolvers_by_id.set(last_message_id, resolver);
-      this.frame.send_process_message(ProcessId.PID_RENDERER, message.native);
-      setTimeout(_ => {
-        this.resolve_response(resolver);
-      }, V8BRIDGE_RESPONE_TIMEOUT_MS);
-    });
-  }
-
-  receive_message(
-    message: ProcessMessage
-  ) {
-    const bridge_message = new PinoV8BridgeMessage(message);
-    if (bridge_message.action < V8BridgeAction.NOT_SET) {
-      this.sub_process_message_from_main(bridge_message);
-    } else if (bridge_message.action > V8BridgeAction.NOT_SET) {
-      this.main_process_message_from_sub(bridge_message);
-    }
-  }
-
-  async eval(
-    code: string,
+  private process_eval_result(
+    response: PinoV8BridgeMessage,
     frame: PinoFrame
-  ): Promise<any> {
-    const request = new PinoV8BridgeMessage();
-    request.action = V8BridgeAction.MAIN_EXECUTE_CODE;
-    request.payload = code;
-    const response = await this.send_message(request);
-    if (!response) {
-      return undefined;
-    }
+  ) {
     switch (response.action) {
       case V8BridgeAction.SUB_UNDEFINED_ERROR:
         throw new Error('Undefined error');
@@ -362,12 +356,80 @@ export class PinoV8Bridge {
     }
   }
 
+  constructor(
+    readonly frame: Frame
+  ) {
+    if (system.is_subprocess) {
+      this.context = new PinoV8context(this.frame.get_v8_context());
+      this.pool = new PinoV8Pool(this.context);
+    }
+  }
+
+  async send_message(
+    message: PinoV8BridgeMessage,
+    timeout_ms: number
+  ): Promise<PinoV8BridgeMessage> {
+    return new Promise<PinoV8BridgeMessage>(resolve => {
+      message.identifier = ++last_message_id;
+      const resolver: BridgeResponseResolver = {
+        resolve
+      };
+      response_resolvers_by_id.set(last_message_id, resolver);
+      this.frame.send_process_message(ProcessId.PID_RENDERER, message.native);
+      if (timeout_ms > 0) {
+        setTimeout(_ => {
+          this.resolve_response(resolver);
+        }, timeout_ms);
+      }
+    });
+  }
+
+  receive_message(
+    message: ProcessMessage,
+    extension?: PinoV8Extension
+  ) {
+    const bridge_message = new PinoV8BridgeMessage(message);
+    if (bridge_message.action < V8BridgeAction.NOT_SET) {
+      this.sub_process_message_from_main(bridge_message, extension);
+    } else if (bridge_message.action > V8BridgeAction.NOT_SET) {
+      this.main_process_message_from_sub(bridge_message);
+    }
+  }
+
+  async eval(
+    code: string,
+    frame: PinoFrame
+  ): Promise<any> {
+    const request = new PinoV8BridgeMessage();
+    request.action = V8BridgeAction.MAIN_EXECUTE_CODE;
+    request.payload = code;
+    const response = await this.send_message(request, V8BRIDGE_RESPONE_TIMEOUT_MS);
+    if (!response) {
+      return undefined;
+    }
+    return this.process_eval_result(response, frame);
+  }
+
+  async eval_and_wait_data(
+    code: string,
+    frame: PinoFrame
+  ): Promise<any> {
+    const request = new PinoV8BridgeMessage();
+    request.action = V8BridgeAction.MAIN_EVAL_AND_WAIT_DATA;
+    request.payload = code;
+    const response = await this.send_message(request, 0);
+    if (!response) {
+      return undefined;
+    }
+    return this.process_eval_result(response, frame);
+  }
+
   context_released(
     frame_id: number
   ) {
     const request = new PinoV8BridgeMessage();
     request.action = V8BridgeAction.SUB_CONTEXT_RELEASED;
     request.payload = JSON.stringify(frame_id);
-    this.send_message(request);
+    this.send_message(request, V8BRIDGE_RESPONE_TIMEOUT_MS);
   }
 }

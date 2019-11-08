@@ -61,6 +61,12 @@ export class PinoFrame {
     return this.bridge.eval(code, this);
   }
 
+  async eval_and_wait_data(
+    code: string
+  ): Promise<any> {
+    return this.bridge.eval_and_wait_data(code, this);
+  }
+
   receive_ipc_message(
     message: ProcessMessage
   ) {

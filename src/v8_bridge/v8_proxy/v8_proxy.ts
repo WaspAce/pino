@@ -7,7 +7,7 @@ import { PinoV8SetPropertyOptions, PinoV8CallMethodOptions } from './../v8_paylo
 import { PinoV8GetPropertyOptions } from '../v8_payload_types';
 import { PinoV8ValueType, get_value_type } from './../v8_value/v8_value_type';
 import { PinoV8BridgeMessage, V8BridgeAction } from './../v8_bridge_message/v8_bridge_message';
-import { PinoV8Bridge } from '../v8_bridge';
+import { PinoV8Bridge, V8BRIDGE_RESPONE_TIMEOUT_MS } from '../v8_bridge';
 import { PinoV8Value } from '../v8_value/v8_value';
 import { PinoFrame } from '../../tab/browser/frame/frame';
 
@@ -28,7 +28,7 @@ export class PinoV8Proxy {
       property_name: name
     };
     request.payload = JSON.stringify(options);
-    const response = await this.bridge.send_message(request);
+    const response = await this.bridge.send_message(request, V8BRIDGE_RESPONE_TIMEOUT_MS);
     const value: PinoV8Value = JSON.parse(response.payload);
     if (value.value_type < PinoV8ValueType.UNDEFINED) {
       return value.value;
@@ -60,7 +60,7 @@ export class PinoV8Proxy {
     const request = new PinoV8BridgeMessage();
     request.action = V8BridgeAction.MAIN_SET_PROPERTY;
     request.payload = JSON.stringify(options);
-    this.bridge.send_message(request);
+    this.bridge.send_message(request, V8BRIDGE_RESPONE_TIMEOUT_MS);
   }
 
   private do_on_get_property(
@@ -96,7 +96,7 @@ export class PinoV8Proxy {
       method_name: name
     };
     request.payload = JSON.stringify(options);
-    const response = await this.bridge.send_message(request);
+    const response = await this.bridge.send_message(request, V8BRIDGE_RESPONE_TIMEOUT_MS);
     const value: PinoV8Value = JSON.parse(response.payload);
     if (value.value_type < PinoV8ValueType.UNDEFINED) {
       return value.value;

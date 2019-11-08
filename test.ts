@@ -1,3 +1,4 @@
+import { IPC_TRANSFER_DATA_FUN_NAME } from './src/subprocess/render_process_handler/v8_extension/v8_extension';
 import { PinoApp } from './src/app/app';
 import { Pino } from './src/pino';
 import { PinoTab } from './src/tab/tab';
@@ -26,6 +27,8 @@ class Test {
     console.log('tab added');
     await this.tab.load('http://tests.wa/wa/iframes.html');
     console.log('loaded');
+    const value = await this.tab.browser.get_main_frame().eval_and_wait_data(`${IPC_TRANSFER_DATA_FUN_NAME}("eval_and_wait_test")`);
+    console.log('eval result: ', value);
     this.divs = await this.tab.find_elements('div[class*="element"]');
     for (const div of this.divs) {
       await div.move_to();
