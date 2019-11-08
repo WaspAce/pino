@@ -1,17 +1,17 @@
+import { SP_INFO_INIT_SCRIPTS_INDEX } from './../../app/app';
+import { IPC_V8_BRIDGE_MSG } from './../../v8_bridge/v8_bridge_message/v8_bridge_message';
 import { PinoSubprocessLoadHandler } from './load_handler/load_handler';
-import { PinoSubprocessV8Extension } from './v8_extension/v8_extension';
-import { SP_INFO_INIT_SCRIPTS_INDEX } from '../../pino_consts';
 import { PinoSubprocess } from '../subprocess';
+import { PinoV8Bridge } from '../../v8_bridge/v8_bridge';
 
 export class PinoSubprocessRenderProcessHandler {
 
   native: RenderProcessHandler;
 
-  private extension: PinoSubprocessV8Extension;
   private load_handler: PinoSubprocessLoadHandler;
   private default_scripts = [
     loader.load_from_file('assets://jquery.min.js'),
-    loader.load_from_file('assets://misc.js')
+    loader.load_from_file('assets://utils.js')
   ];
 
   private define_initial_scripts(
@@ -34,14 +34,23 @@ export class PinoSubprocessRenderProcessHandler {
     this.define_initial_scripts(subprocess_info);
   }
 
-  private create_extension() {
-    this.extension = new PinoSubprocessV8Extension(this);
+  private do_on_process_message_received(
+    browser: Browser,
+    frame: Frame,
+    source_process: ProcessId,
+    message: ProcessMessage
+  ): boolean {
+    if (message.name === IPC_V8_BRIDGE_MSG) {
+      const bridge = new PinoV8Bridge(frame);
+      bridge.receive_message(message);
+    }
+    return true;
   }
 
   private init_native() {
     this.native = new RenderProcessHandler(this);
     this.native.on_render_thread_created = this.do_on_render_thread_created;
-    this.native.v8_extension = this.extension.native;
+    this.native.on_process_message_received = this.do_on_process_message_received;
   }
 
   private create_load_handler() {
@@ -52,7 +61,6 @@ export class PinoSubprocessRenderProcessHandler {
   constructor(
     readonly subprocess: PinoSubprocess
   ) {
-    this.create_extension();
     this.init_native();
     this.create_load_handler();
   }

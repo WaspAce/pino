@@ -1,9 +1,12 @@
 import { PinoApp } from './src/app/app';
 import { Pino } from './src/pino';
+import { PinoTab } from './src/tab/tab';
 
 class Test {
   private app: PinoApp;
   private pino: Pino;
+  private tab: PinoTab;
+  private divs = [];
 
   constructor() {
     this.app = new PinoApp();
@@ -16,13 +19,18 @@ class Test {
     this.app.init();
     await this.pino.init();
     console.log('inited');
-    this.pino.screen.screen_info.available_rect.width = 500;
+    this.pino.screen.screen_info.available_rect.width = 1000;
+    this.pino.screen.view_rect.width = 1000;
     this.pino.screen_changed();
-    const tab = await this.pino.add_tab();
+    this.tab = await this.pino.add_tab();
     console.log('tab added');
-    // await tab.load('https://www.youtube.com/watch?v=vuT_bXzhqhY');
-    await tab.load('https://whoer.net/extended');
+    await this.tab.load('http://tests.wa/wa/iframes.html');
     console.log('loaded');
+    this.divs = await this.tab.find_elements('div[class*="element"]');
+    for (const div of this.divs) {
+      await div.move_to();
+      console.log('moved to: ', await div.className);
+    }
   }
 }
 

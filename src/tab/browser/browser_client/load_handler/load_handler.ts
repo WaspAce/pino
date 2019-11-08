@@ -1,3 +1,4 @@
+import { UriScheme, URI } from './../../../../uri/uri';
 import { PinoBrowserClient } from '../browser_client';
 
 export class PinoLoadHandler {
@@ -9,17 +10,7 @@ export class PinoLoadHandler {
     frame: Frame,
     transition_type: TransitionType
   ) {
-    console.log('load start');
-  }
-
-  private do_on_load_error(
-    browser: Browser,
-    frame: Frame,
-    error_code: CefErrorCode,
-    error_text: string,
-    failed_url: string
-  ) {
-    console.log('error: ', failed_url, ' : ', error_code, ' : ', error_text);
+    //
   }
 
   private do_on_load_end(
@@ -27,13 +18,12 @@ export class PinoLoadHandler {
     frame: Frame,
     http_status_code: number
   ) {
-    console.log('load end: ', http_status_code);
+    //
   }
 
   private init_native() {
     this.native = new LoadHandler(this);
     this.native.on_load_start = this.do_on_load_start;
-    this.native.on_load_error = this.do_on_load_error;
     this.native.on_load_end = this.do_on_load_end;
   }
 

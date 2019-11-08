@@ -1,4 +1,4 @@
-import { SP_INFO_INIT_SCRIPTS_INDEX } from './../pino_consts';
+export const SP_INFO_INIT_SCRIPTS_INDEX = 0;
 
 export class PinoApp {
 

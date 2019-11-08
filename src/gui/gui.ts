@@ -5,8 +5,12 @@ export class PinoGui {
 
   view: GuiPanel;
   tabs: GuiTabs;
+  view_image: Image;
 
   private form: GuiForm;
+  private cursor = new Image();
+  private additional_images: Image[] = [];
+
   private on_tab_added: (value?: number) => void;
   private on_form_ready: () => void;
   private on_tabs_ready: () => void;
@@ -83,6 +87,8 @@ export class PinoGui {
   private on_view_change_bounds(
     rect: Rect
   ) {
+    this.view_image.width = this.view.rect.width;
+    this.view_image.height = this.view.rect.height;
     this.pino.view_resized();
   }
 
@@ -153,14 +159,16 @@ export class PinoGui {
     modifiers: EventFlags[]
   ) {
     if (this.pino.is_mobile) {
-      const event = new TouchEvent();
-      event.id = 1;
-      event.modifiers = modifiers;
-      event.pointer_type = PointerType.CEF_POINTER_TYPE_TOUCH;
-      event.type_ = TouchEventType.CEF_TET_MOVED;
-      event.x = x;
-      event.y = y;
-      this.pino.send_touch_event(event);
+      if (modifiers.includes(EventFlags.EVENTFLAG_LEFT_MOUSE_BUTTON)) {
+        const event = new TouchEvent();
+        event.id = 1;
+        event.modifiers = modifiers;
+        event.pointer_type = PointerType.CEF_POINTER_TYPE_TOUCH;
+        event.type_ = TouchEventType.CEF_TET_MOVED;
+        event.x = x;
+        event.y = y;
+        this.pino.send_touch_event(event);
+      }
     } else {
       const event = new MouseEvent();
       event.modifiers = modifiers;
@@ -228,12 +236,17 @@ export class PinoGui {
       if (!this.pino.screen.is_default) {
         this.view.rect.copy_from(this.screen.view_rect);
       }
+      this.view_image = new Image();
     });
   }
 
   constructor(
     private readonly pino: Pino
-  ) {}
+  ) {
+    this.cursor.load_from_file('assets://img/cursor.png');
+    this.cursor.x = 0;
+    this.cursor.y = 0;
+  }
 
   async init() {
     await this.create_form();
@@ -250,6 +263,34 @@ export class PinoGui {
 
   screen_changed() {
     this.form.rect.copy_from(this.screen.screen_info.available_rect);
+  }
+
+  repaint() {
+    this.view.paint([this.view_image].concat(this.additional_images).concat(this.cursor));
+  }
+
+  browser_was_painted() {
+    this.repaint();
+  }
+
+  cursor_moved(
+    x: number,
+    y: number
+  ) {
+    if (x !== this.cursor.x || y !== this.cursor.y) {
+      this.cursor.x = x;
+      this.cursor.y = y;
+      this.repaint();
+    }
+  }
+
+  add_image(
+    image: Image
+  ) {
+    if (this.additional_images.indexOf(image) === -1) {
+      this.additional_images.push(image);
+    }
+    this.repaint();
   }
 
   get screen(): PinoScreen {

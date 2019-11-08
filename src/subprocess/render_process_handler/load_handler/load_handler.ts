@@ -1,5 +1,7 @@
-import { IPC_PAGE_LOADED, URL_DEFAULT_SCRIPT } from '../../../pino_consts';
 import { PinoSubprocessRenderProcessHandler } from '../render_process_handler';
+
+export const URL_DEFAULT_SCRIPT = 'http://custom_js.wa';
+export const IPC_PAGE_LOADED = 'page_loaded';
 
 export class PinoSubprocessLoadHandler {
 

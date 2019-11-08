@@ -1,8 +1,11 @@
+import { IPC_V8_BRIDGE_MSG } from './../../v8_bridge/v8_bridge_message/v8_bridge_message';
 import { Pino } from './../../pino';
 import { PinoBrowserClient } from './browser_client/browser_client';
 import { PinoTab } from '../tab';
 import { URI } from '../../uri/uri';
-import { IPC_TRANSFER_DATA_FUN_NAME, IPC_EXCEPTION_FUN_NAME, URL_DEFAULT_SCRIPT, URL_BLANK_PAGE } from '../../pino_consts';
+import { PinoFrame } from './frame/frame';
+
+const URL_BLANK_PAGE = 'about:blank';
 
 export class PinoBrowser {
   native: Browser;
@@ -11,10 +14,10 @@ export class PinoBrowser {
   private host: BrowserHost;
   private on_subprocess_loaded: (value?: any) => void;
   private on_page_loaded: (value?: any) => void;
-  private on_ipc_message_resolve: (value?: ListValue) => void;
-  private on_ipc_message_reject: (reason?: any) => void;
   private load_timeout = -1;
-  private on_painted: (images: Image[]) => void;
+  private on_painted: () => void;
+  private frames_by_id = new Map<number, PinoFrame>();
+  private f_frames: PinoFrame[] = [];
 
   private init_client() {
     this.client = new PinoBrowserClient(this);
@@ -25,6 +28,7 @@ export class PinoBrowser {
       const window_info = new WindowInfo();
       const settings = new BrowserSettings();
       settings.frame_rate = this.pino.frame_rate;
+      settings.web_security = false;
 
       const browser = new Browser(
         window_info,
@@ -92,14 +96,44 @@ export class PinoBrowser {
     return result;
   }
 
-  private reject_ipc_message(
-    reason?
+  private update_frames() {
+    const frame_ids = this.native.get_frame_identifiers();
+    const new_frames_by_id = new Map<number, PinoFrame>();
+    frame_ids.forEach(frame_id => {
+      if (this.frames_by_id.has(frame_id)) {
+        const frame = this.frames_by_id.get(frame_id);
+        frame.children = [];
+        new_frames_by_id.set(frame_id, frame);
+      } else {
+        const native_frame = this.native.get_frame_by_identifier(frame_id);
+        const frame = new PinoFrame(
+          native_frame,
+          this
+        );
+        new_frames_by_id.set(frame_id, frame);
+      }
+    });
+    this.frames_by_id = new_frames_by_id;
+
+    this.f_frames = [];
+    frame_ids.forEach(frame_id => {
+      const frame = this.frames_by_id.get(frame_id);
+      this.f_frames.push(frame);
+      if (!frame.native.is_main) {
+        const parent_frame = this.frames_by_id.get(frame.native.get_parent().identifier);
+        frame.parent = parent_frame;
+        parent_frame.children.push(frame);
+      }
+    });
+  }
+
+  private process_frame_message(
+    message: ProcessMessage,
+    frame: Frame
   ) {
-    if (this.on_ipc_message_reject) {
-      this.on_ipc_message_resolve = undefined;
-      const reject = this.on_ipc_message_reject;
-      this.on_ipc_message_reject = undefined;
-      reject(reason);
+    this.update_frames();
+    if (this.frames_by_id.has(frame.identifier)) {
+      this.frames_by_id.get(frame.identifier).receive_ipc_message(message);
     }
   }
 
@@ -136,7 +170,7 @@ export class PinoBrowser {
   }
 
   add_draw_target(
-    target: GuiPanel
+    target: Image
   ) {
     this.client.add_draw_target(target);
   }
@@ -175,10 +209,11 @@ export class PinoBrowser {
   }
 
   send_mouse_move_event(
-    event: MouseEvent
+    event: MouseEvent,
+    mouse_leave?: boolean
   ) {
     if (this.host) {
-      this.host.send_mouse_move_event(event, false);
+      this.host.send_mouse_move_event(event, mouse_leave);
     }
   }
 
@@ -215,16 +250,11 @@ export class PinoBrowser {
   }
 
   process_message_received(
-    message: ProcessMessage
+    message: ProcessMessage,
+    frame: Frame
   ) {
-    if (message.name === IPC_TRANSFER_DATA_FUN_NAME && this.on_ipc_message_resolve) {
-      this.on_ipc_message_reject = undefined;
-      const resolve = this.on_ipc_message_resolve;
-      this.on_ipc_message_resolve = undefined;
-      resolve(message.get_argument_list());
-    } else if (message.name === IPC_EXCEPTION_FUN_NAME && this.on_ipc_message_reject) {
-      const error = message.get_argument_list().get_string(0);
-      this.reject_ipc_message(`IPC exception: ${error}`);
+    if (message.name === IPC_V8_BRIDGE_MSG) {
+      this.process_frame_message(message, frame);
     }
   }
 
@@ -283,40 +313,6 @@ export class PinoBrowser {
     }
   }
 
-  async execute_js_and_wait_ipc(
-    code: string,
-    timeout_ms?: number
-  ): Promise<ListValue> {
-    return new Promise<ListValue>((resolve, reject) => {
-      if (this.native) {
-        this.on_ipc_message_resolve = resolve;
-        this.on_ipc_message_reject = reject;
-        this.native.get_main_frame().execute_java_script(
-          this.wrap_js_code(code),
-          URL_DEFAULT_SCRIPT,
-          0
-        );
-        if (timeout_ms && timeout_ms > 0) {
-          setTimeout(() => {
-            this.reject_ipc_message('IPC message wait timeout');
-          }, timeout_ms);
-        }
-      } else {
-        reject('No native browser');
-      }
-    });
-  }
-
-  execute_js(
-    code: string
-  ) {
-    this.native.get_main_frame().execute_java_script(
-      this.wrap_js_code(code),
-      URL_DEFAULT_SCRIPT,
-      0
-    );
-  }
-
   async invalidate_view(): Promise<Image[]> {
     if (this.host) {
       return new Promise<Image[]>(resolve => {
@@ -326,13 +322,12 @@ export class PinoBrowser {
     }
   }
 
-  was_painted(
-    images: Image[]
-  ) {
+  was_painted() {
+    this.tab.was_painted();
     if (this.on_painted) {
       const resolve = this.on_painted;
       this.on_painted = undefined;
-      resolve(images);
+      resolve();
     }
   }
 
@@ -342,7 +337,37 @@ export class PinoBrowser {
     }
   }
 
+  get_frame_by_id(
+    id: number
+  ): PinoFrame {
+    this.update_frames();
+    if (this.frames_by_id.has(id)) {
+      return this.frames_by_id.get(id);
+    } else {
+      return undefined;
+    }
+  }
+
+  get_frame_by_index(
+    index: number
+  ): PinoFrame {
+    this.update_frames();
+    if (this.f_frames.length > index) {
+      return this.f_frames[index];
+    }
+  }
+
+  get_main_frame(): PinoFrame {
+    const main_frame_id = this.native.get_main_frame().identifier;
+    return this.get_frame_by_id(main_frame_id);
+  }
+
   get pino(): Pino {
     return this.tab.pino;
+  }
+
+  get frames(): PinoFrame[] {
+    this.update_frames();
+    return this.f_frames;
   }
 }

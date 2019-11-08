@@ -1,3 +1,4 @@
+import { ELEMENT_MIN_SIZE } from './common';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
 import { PinoScreen } from './screen/screen';
@@ -19,10 +20,11 @@ export class Pino {
     password: string
   };
 
-  frame_rate = 30;
+  frame_rate = 60;
   load_timeout_ms = 20000;
   block_subframes = false;
   is_mobile = false;
+  on_painted: RenderHandlerOnPainted;
 
   private active_tab: PinoTab;
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();

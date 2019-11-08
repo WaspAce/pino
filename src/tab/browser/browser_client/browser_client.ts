@@ -1,7 +1,7 @@
+import { IPC_PAGE_LOADED } from './../../../subprocess/render_process_handler/load_handler/load_handler';
 import { Pino } from './../../../pino';
 import { PinoLoadHandler } from './load_handler/load_handler';
 import { PinoBrowser } from './../browser';
-import { IPC_PAGE_LOADED } from '../../../pino_consts';
 import { PinoRequestHandler } from './request_handler/request_handler';
 import { PinoDisplayHandler } from './display_handler/display_handler';
 import { PinoLifeSpanHandler } from './life_span_handler/life_span_handler';
@@ -50,7 +50,7 @@ export class PinoBrowserClient {
     if (message.name === IPC_PAGE_LOADED) {
       this.browser.subprocess_loaded();
     } else {
-      this.browser.process_message_received(message);
+      this.browser.process_message_received(message, frame);
     }
   }
 
@@ -81,7 +81,7 @@ export class PinoBrowserClient {
   }
 
   add_draw_target(
-    target: GuiPanel
+    target: Image
   ) {
     this.render_handler.add_draw_target(target);
   }

@@ -15,7 +15,7 @@
   "dependencies": {
     "ale_types": "git+https://github.com/WaspAce/ale_types.git",
     "dotenv-cli": "^1.4.0",
-    "tslint": "^5.19.0",
-    "typescript": "^3.6.4"
+    "tslint": "^5.20.1",
+    "typescript": "^3.7.2"
   }
 }

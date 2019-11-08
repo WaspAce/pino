@@ -26,11 +26,13 @@ export class PinoRenderHandler {
     }
   }
 
-  private do_on_paint(
-    browser: Browser,
-    images: Image[]
+  private do_on_painted(
+    browser: Browser
   ) {
-    this.client.browser.was_painted(images);
+    this.client.browser.was_painted();
+    if (this.pino.on_painted) {
+      this.pino.on_painted(browser);
+    }
   }
 
   private init_native() {
@@ -41,7 +43,7 @@ export class PinoRenderHandler {
     if (this.monitor) {
       this.native.on_get_screen_point = this.do_on_get_screen_point;
     }
-    this.native.on_paint = this.do_on_paint;
+    this.native.on_painted = this.do_on_painted;
   }
 
   constructor(
@@ -52,7 +54,7 @@ export class PinoRenderHandler {
   }
 
   add_draw_target(
-    target: GuiPanel
+    target: Image
   ) {
     this.native.add_draw_targets([target]);
   }
