@@ -225,23 +225,7 @@ export class PinoBrowser {
     }
   }
 
-  send_key_press(
-    event: KeyEvent
-  ) {
-    if (this.host) {
-      this.host.send_key_event(event);
-    }
-  }
-
-  send_key_down(
-    event: KeyEvent
-  ) {
-    if (this.host) {
-      this.host.send_key_event(event);
-    }
-  }
-
-  send_key_up(
+  send_key_event(
     event: KeyEvent
   ) {
     if (this.host) {

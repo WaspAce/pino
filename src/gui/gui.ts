@@ -185,7 +185,7 @@ export class PinoGui {
     event.event_type = KeyEventType.KEYEVENT_CHAR;
     event.character = char;
     event.windows_key_code = char.charCodeAt(0);
-    this.pino.send_key_press(event);
+    this.pino.send_key_event(event);
   }
 
   private do_on_key_down(
@@ -196,7 +196,7 @@ export class PinoGui {
     event.event_type = KeyEventType.KEYEVENT_RAWKEYDOWN;
     event.windows_key_code = key_code;
     event.modifiers = modifiers;
-    this.pino.send_key_down(event);
+    this.pino.send_key_event(event);
   }
 
   private do_on_key_up(
@@ -204,10 +204,10 @@ export class PinoGui {
     modifiers: EventFlags[]
   ) {
     const event = new KeyEvent();
-    event.event_type = KeyEventType.KEYEVENT_RAWKEYDOWN;
+    event.event_type = KeyEventType.KEYEVENT_KEYUP;
     event.windows_key_code = key_code;
     event.modifiers = modifiers;
-    this.pino.send_key_up(event);
+    this.pino.send_key_event(event);
   }
 
   private do_on_view_ready() {

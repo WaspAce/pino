@@ -4,6 +4,7 @@ import { PinoBrowser } from './browser/browser';
 import { Pino } from '../pino';
 
 const DEFAULT_MOVE_SPEED = 15;
+const DEFAULT_TYPE_SPEED = 6;
 
 export class PinoTab {
 
@@ -110,28 +111,48 @@ export class PinoTab {
     this.last_mouse_point.y = event.y;
   }
 
-  send_key_press(
+  send_key_event(
     event: KeyEvent
   ) {
     if (this.browser) {
-      this.browser.send_key_press(event);
+      this.browser.send_key_event(event);
     }
   }
 
-  send_key_down(
-    event: KeyEvent
+  key_down(
+    key_code: number,
+    modifiers?: EventFlags[]
   ) {
-    if (this.browser) {
-      this.browser.send_key_down(event);
+    const event = new KeyEvent();
+    event.event_type = KeyEventType.KEYEVENT_RAWKEYDOWN;
+    event.windows_key_code = key_code;
+    if (modifiers) {
+      event.modifiers = modifiers;
     }
+    this.pino.send_key_event(event);
   }
 
-  send_key_up(
-    event: KeyEvent
+  key_up(
+    key_code: number,
+    modifiers?: EventFlags[]
   ) {
-    if (this.browser) {
-      this.browser.send_key_up(event);
+    const event = new KeyEvent();
+    event.event_type = KeyEventType.KEYEVENT_KEYUP;
+    event.windows_key_code = key_code;
+    if (modifiers) {
+      event.modifiers = modifiers;
     }
+    this.pino.send_key_event(event);
+  }
+
+  send_char(
+    char: string
+  ) {
+    const event = new KeyEvent();
+    event.event_type = KeyEventType.KEYEVENT_CHAR;
+    event.character = char;
+    event.windows_key_code = char.charCodeAt(0);
+    this.pino.send_key_event(event);
   }
 
   browser_created() {
@@ -301,5 +322,31 @@ export class PinoTab {
       await misc.sleep(10 + Math.random() * 10);
       this.send_mouse_up_event(event, MouseButtonType.MBT_LEFT);
     }
+  }
+
+  async type_text(
+    text: string,
+    speed?: number
+  ) {
+    if (text) {
+      for (const char of text) {
+        this.send_char(char);
+        if (!speed) {
+          speed = DEFAULT_TYPE_SPEED;
+        }
+        const interval = Math.round(1000 / speed + Math.random() * 1000 / speed);
+        await misc.sleep(interval);
+      }
+    }
+  }
+
+  async press_key(
+    key_code: number
+  ) {
+    this.key_down(key_code);
+    const interval = Math.round(1000 / DEFAULT_TYPE_SPEED + Math.random() * 1000 / DEFAULT_TYPE_SPEED);
+    await misc.sleep(interval);
+    this.send_char(String.fromCharCode(key_code));
+    this.key_up(key_code);
   }
 }

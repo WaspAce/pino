@@ -133,27 +133,11 @@ export class Pino {
     }
   }
 
-  send_key_press(
+  send_key_event(
     event: KeyEvent
   ) {
     if (this.active_tab) {
-      this.active_tab.send_key_press(event);
-    }
-  }
-
-  send_key_down(
-    event: KeyEvent
-  ) {
-    if (this.active_tab) {
-      this.active_tab.send_key_down(event);
-    }
-  }
-
-  send_key_up(
-    event: KeyEvent
-  ) {
-    if (this.active_tab) {
-      this.active_tab.send_key_up(event);
+      this.active_tab.send_key_event(event);
     }
   }
 
