@@ -48,6 +48,9 @@ export class PinoTab {
     if (this.browser) {
       this.browser.send_mouse_wheel_event(event, delta);
     }
+    if (this.pino.gui) {
+      this.pino.gui.cursor_moved(event.x, event.y);
+    }
     this.last_mouse_point.x = event.x;
     this.last_mouse_point.y = event.y;
   }
@@ -59,6 +62,9 @@ export class PinoTab {
     if (this.browser) {
       this.browser.send_mouse_down_event(event, button);
     }
+    if (this.pino.gui) {
+      this.pino.gui.cursor_moved(event.x, event.y);
+    }
     this.last_mouse_point.x = event.x;
     this.last_mouse_point.y = event.y;
   }
@@ -69,6 +75,9 @@ export class PinoTab {
   ) {
     if (this.browser) {
       this.browser.send_mouse_up_event(event, button);
+    }
+    if (this.pino.gui) {
+      this.pino.gui.cursor_moved(event.x, event.y);
     }
     this.last_mouse_point.x = event.x;
     this.last_mouse_point.y = event.y;
@@ -93,9 +102,9 @@ export class PinoTab {
   ) {
     if (this.browser) {
       this.browser.send_touch_event(event);
-      // if (this.pino.gui) {
-      //   this.pino.gui.cursor_moved(event.x, event.y);
-      // }
+      if (this.pino.gui) {
+        this.pino.gui.cursor_moved(event.x, event.y);
+      }
     }
     this.last_mouse_point.x = event.x;
     this.last_mouse_point.y = event.y;
@@ -267,8 +276,11 @@ export class PinoTab {
   }
 
   async click(
-    point: Point
+    point?: Point
   ) {
+    if (!point) {
+      point = this.last_mouse_point;
+    }
     if (this.pino.is_mobile) {
       const event = new TouchEvent();
       event.id = 1;

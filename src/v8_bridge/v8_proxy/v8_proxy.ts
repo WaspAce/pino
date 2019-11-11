@@ -263,6 +263,11 @@ export class PinoV8Proxy {
     return element_rects;
   }
 
+  async click() {
+    await this.move_to();
+    this.tab.click();
+  }
+
   get pino(): Pino {
     return this.frame.pino;
   }

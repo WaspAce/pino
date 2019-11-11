@@ -14,6 +14,7 @@ class Test {
     this.pino = new Pino(
       true
     );
+    this.pino.is_mobile = true;
   }
 
   async go() {
@@ -25,15 +26,18 @@ class Test {
     this.pino.screen_changed();
     this.tab = await this.pino.add_tab();
     console.log('tab added');
-    await this.tab.load('http://tests.wa/wa/iframes.html');
+    await this.tab.load('http://tests.wa/wa/events.html');
     console.log('loaded');
     const value = await this.tab.browser.get_main_frame().eval_and_wait_data(`${IPC_TRANSFER_DATA_FUN_NAME}("eval_and_wait_test")`);
     console.log('eval result: ', value);
-    this.divs = await this.tab.find_elements('div[class*="element"]');
-    for (const div of this.divs) {
-      await div.move_to();
-      console.log('moved to: ', await div.className);
-    }
+    // this.divs = await this.tab.find_elements('div[class*="element"]');
+    // for (const div of this.divs) {
+    //   await div.move_to();
+    //   console.log('moved to: ', await div.className);
+    // }
+    const inputs = await this.tab.find_elements('input');
+    await inputs[0].click();
+    console.log('clicked');
   }
 }
 
