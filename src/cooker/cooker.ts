@@ -4,7 +4,7 @@ import {
   ADJUVANT_COOKIE_NAME,
   ADJUVANT_COOKIE_DOMAIN,
   ADJUVANT_COOKIE_VALUE
-} from './../cookie_collector/cookie_collector';
+} from './cookie_collector/cookie_collector';
 import { CookerSetCookieCallback } from './set_cookie_callback/set_cookie_callback';
 import { URI } from '../uri/uri';
 

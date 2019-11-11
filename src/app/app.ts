@@ -36,6 +36,19 @@ export class PinoApp {
     CEF_APP.init();
   }
 
+  add_initial_scripts(
+    scripts: string[]
+  ) {
+    if (scripts && scripts.length > 0) {
+      const initial_scripts = CEF_APP.subprocess_info.get_list(SP_INFO_INIT_SCRIPTS_INDEX);
+      const old_size = initial_scripts.size;
+      initial_scripts.set_size(old_size + scripts.length);
+      scripts.forEach((code, index) => {
+        initial_scripts.set_string(index + old_size, code);
+      });
+    }
+  }
+
   get app_loop_interval_ms(): number {
     return CEF_APP.loop_interval_ms;
   }
