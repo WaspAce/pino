@@ -231,7 +231,12 @@ export class PinoV8Proxy {
   }
 
   async scroll_to(): Promise<PinoElementRects> {
-    const frame_rects = await this.frame.move_to();
+    let frame_rects: PinoElementRects;
+    if (!this.frame.native.is_main) {
+      frame_rects = await this.frame.move_to();
+    } else {
+      frame_rects = await this.frame.get_rects();
+    }
     let element_rects = await this.get_rects();
     if (this.pino.screen.view_rect.intersects(frame_rects.view)) {
       let rect_before_scroll = new Rect();

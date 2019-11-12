@@ -3,8 +3,9 @@ import { BezierPath } from './../bezier/bezier_path';
 import { PinoBrowser } from './browser/browser';
 import { Pino } from '../pino';
 
-const DEFAULT_MOVE_SPEED = 15;
-const DEFAULT_TYPE_SPEED = 6;
+const DEFAULT_MOVE_SPEED = 25;
+const DEFAULT_TYPE_SPEED = 30;
+const MIN_TYPE_INTERVAL_MS = 10;
 
 export class PinoTab {
 
@@ -199,22 +200,16 @@ export class PinoTab {
   async find_elements(
     selector: string
   ): Promise<any[]> {
-    return new Promise<any[]>(resolve => {
-      const jq_promises: Array<Promise<any>> = [];
-      this.browser.frames.forEach(frame => {
-        jq_promises.push(frame.eval(`Reflect.find_elements(${JSON.stringify(selector)})`));
-      });
-      Promise.all(jq_promises).then(async jqs => {
-        const element_promises: Array<Promise<any>> = [];
-        for (const jq of jqs) {
-          const length = await jq.length;
-          for (let i = 0; i < length; i++) {
-            element_promises.push(jq[i]);
-          }
-        }
-        resolve(await Promise.all(element_promises));
-      });
+    const result = [];
+    const promises = [];
+    for (const frame of this.browser.frames) {
+      promises.push(frame.find_elements(selector));
+    }
+    const arrays = await Promise.all(promises);
+    arrays.forEach(arr => {
+      result.push(...arr);
     });
+    return result;
   }
 
   async scroll(
@@ -240,7 +235,7 @@ export class PinoTab {
       event.x = start_point.x;
       event.y = start_point.y;
       this.send_touch_event(event);
-      await misc.sleep(10 + Math.random() * 5);
+      await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
 
       const path = new BezierPath(
         start_point,
@@ -253,7 +248,7 @@ export class PinoTab {
         event.x = path_point.x;
         event.y = path_point.y;
         this.pino.send_touch_event(event);
-        await misc.sleep(10 + Math.random() * 5);
+        await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
       }
 
       event.type_ = TouchEventType.CEF_TET_RELEASED;
@@ -291,7 +286,7 @@ export class PinoTab {
         event.x = path_point.x;
         event.y = path_point.y;
         this.send_mouse_move_event(event, mouse_leave);
-        await misc.sleep(10 + Math.random() * 5);
+        await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
       }
     }
   }
@@ -311,7 +306,7 @@ export class PinoTab {
       event.x = point.x;
       event.y = point.y;
       this.send_touch_event(event);
-      await misc.sleep(100 + Math.random() * 50);
+      await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
       event.type_ = TouchEventType.CEF_TET_RELEASED;
       this.send_touch_event(event);
     } else {
@@ -319,7 +314,7 @@ export class PinoTab {
       event.x = point.x;
       event.y = point.y;
       this.send_mouse_down_event(event, MouseButtonType.MBT_LEFT);
-      await misc.sleep(10 + Math.random() * 10);
+      await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
       this.send_mouse_up_event(event, MouseButtonType.MBT_LEFT);
     }
   }
@@ -334,7 +329,7 @@ export class PinoTab {
         if (!speed) {
           speed = DEFAULT_TYPE_SPEED;
         }
-        const interval = Math.round(1000 / speed + Math.random() * 1000 / speed);
+        const interval = MIN_TYPE_INTERVAL_MS + Math.round(Math.random() * 1000 / speed);
         await misc.sleep(interval);
       }
     }
@@ -344,7 +339,7 @@ export class PinoTab {
     key_code: number
   ) {
     this.key_down(key_code);
-    const interval = Math.round(1000 / DEFAULT_TYPE_SPEED + Math.random() * 1000 / DEFAULT_TYPE_SPEED);
+    const interval = MIN_TYPE_INTERVAL_MS + Math.round(Math.random() * 1000 / DEFAULT_TYPE_SPEED);
     await misc.sleep(interval);
     this.send_char(String.fromCharCode(key_code));
     this.key_up(key_code);

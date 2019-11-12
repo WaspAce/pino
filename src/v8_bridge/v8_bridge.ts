@@ -16,7 +16,7 @@ interface BridgeResponseResolver {
 let last_message_id = 0;
 const response_resolvers_by_id = new Map<number, BridgeResponseResolver>();
 
-export const V8BRIDGE_RESPONE_TIMEOUT_MS = 1000;
+export const V8BRIDGE_RESPONE_TIMEOUT_MS = 10000;
 
 export class PinoV8Bridge {
 

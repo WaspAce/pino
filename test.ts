@@ -14,7 +14,7 @@ class Test {
     this.pino = new Pino(
       true
     );
-    this.pino.is_mobile = true;
+    this.pino.is_mobile = false;
   }
 
   async go() {

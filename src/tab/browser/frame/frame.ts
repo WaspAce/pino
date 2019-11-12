@@ -67,6 +67,18 @@ export class PinoFrame {
     return this.bridge.eval_and_wait_data(code, this);
   }
 
+  async find_elements(
+    selector: string
+  ): Promise<any[]> {
+    const jq = await this.eval(`Reflect.find_elements(${JSON.stringify(selector)})`);
+    const lng = await jq.length;
+    const element_promises = [];
+    for (let i = 0; i < lng; i++) {
+      element_promises.push(jq[i]);
+    }
+    return await Promise.all(element_promises);
+  }
+
   receive_ipc_message(
     message: ProcessMessage
   ) {
@@ -153,7 +165,6 @@ export class PinoFrame {
       point.x = rect.x + Math.random() * rect.width;
       point.y = rect.y + Math.random() * rect.height;
     } else {
-      // const horizontal_edge = Math.random() > 0.5;
       const horizontal_edge = false;
       if (horizontal_edge) {
         point.x = rect.x + Math.random() * rect.width;
