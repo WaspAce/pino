@@ -1,6 +1,9 @@
+import { PinoScreen } from './screen/screen';
 export const SP_INFO_INIT_SCRIPTS_INDEX = 0;
 
 export class PinoApp {
+
+  screen: PinoScreen;
 
   private define_initial_scripts(
     subprocess_info: ListValue
@@ -34,6 +37,9 @@ export class PinoApp {
 
   init() {
     CEF_APP.init();
+    if (!this.screen) {
+      this.screen = new PinoScreen();
+    }
   }
 
   add_initial_scripts(

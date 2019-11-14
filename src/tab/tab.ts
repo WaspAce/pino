@@ -1,11 +1,15 @@
+import {
+  DEFAULT_TYPE_SPEED,
+  MIN_TYPE_INTERVAL_MS,
+  MOUSE_DEFAULT_MOVE_SPEED,
+  TOUCH_MIN_INTERVAL_MS,
+  TOUCH_MAX_INTERVAL_MS,
+  TOUCH_DEFAULT_MOVE_SPEED
+} from './../common';
 import { misc } from './../misc/misc';
 import { BezierPath } from './../bezier/bezier_path';
 import { PinoBrowser } from './browser/browser';
 import { Pino } from '../pino';
-
-const DEFAULT_MOVE_SPEED = 25;
-const DEFAULT_TYPE_SPEED = 30;
-const MIN_TYPE_INTERVAL_MS = 10;
 
 export class PinoTab {
 
@@ -235,20 +239,19 @@ export class PinoTab {
       event.x = start_point.x;
       event.y = start_point.y;
       this.send_touch_event(event);
-      await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
 
       const path = new BezierPath(
         start_point,
         end_point,
-        this.pino.screen.view_rect,
-        DEFAULT_MOVE_SPEED
+        this.pino.app.screen.view_rect,
+        TOUCH_DEFAULT_MOVE_SPEED
       );
       for (const path_point of path.points) {
         event.type_ = TouchEventType.CEF_TET_MOVED;
         event.x = path_point.x;
         event.y = path_point.y;
         this.pino.send_touch_event(event);
-        await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
+        await misc.sleep(misc.random_int(TOUCH_MIN_INTERVAL_MS, TOUCH_MAX_INTERVAL_MS));
       }
 
       event.type_ = TouchEventType.CEF_TET_RELEASED;
@@ -278,8 +281,8 @@ export class PinoTab {
       const path = new BezierPath(
         this.last_mouse_point,
         point,
-        this.pino.screen.view_rect,
-        DEFAULT_MOVE_SPEED
+        this.pino.app.screen.view_rect,
+        MOUSE_DEFAULT_MOVE_SPEED
       );
       for (const path_point of path.points) {
         const event = new MouseEvent();

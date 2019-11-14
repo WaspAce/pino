@@ -1,11 +1,9 @@
-import { ELEMENT_MIN_SIZE } from './common';
+import { PinoApp } from './app/app';
 import { PinoTab } from './tab/tab';
 import { PinoGui } from './gui/gui';
-import { PinoScreen } from './screen/screen';
 
 export class Pino {
 
-  screen: PinoScreen;
   gui: PinoGui;
   on_get_auth_credentials: (
     browser: Browser,
@@ -25,8 +23,8 @@ export class Pino {
   block_subframes = false;
   is_mobile = false;
   on_painted: RenderHandlerOnPainted;
+  active_tab: PinoTab;
 
-  private active_tab: PinoTab;
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();
 
   private create_gui() {
@@ -55,6 +53,7 @@ export class Pino {
   }
 
   constructor(
+    readonly app: PinoApp,
     gui?: boolean
   ) {
     if (gui) {
@@ -63,9 +62,6 @@ export class Pino {
   }
 
   async init() {
-    if (!this.screen) {
-      this.screen = new PinoScreen();
-    }
     if (this.gui) {
       await this.gui.init();
     }

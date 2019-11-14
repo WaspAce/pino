@@ -37,9 +37,9 @@ export class PinoRenderHandler {
 
   private init_native() {
     this.native = new RenderHandler(this);
-    this.native.root_screen_rect = this.pino.screen.root_screen_rect;
-    this.native.view_rect = this.pino.screen.view_rect;
-    this.native.screen_info = this.pino.screen.screen_info;
+    this.native.root_screen_rect = this.pino.app.screen.root_screen_rect;
+    this.native.view_rect = this.pino.app.screen.view_rect;
+    this.native.screen_info = this.pino.app.screen.screen_info;
     if (this.monitor) {
       this.native.on_get_screen_point = this.do_on_get_screen_point;
     }

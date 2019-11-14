@@ -1,5 +1,5 @@
 import { Pino } from '../pino';
-import { PinoScreen } from '../screen/screen';
+import { PinoScreen } from '../app/screen/screen';
 
 export class PinoGui {
 
@@ -233,7 +233,7 @@ export class PinoGui {
       this.view.on_key_up = this.do_on_key_up;
       this.view.align = AlignType.alClient;
       this.view.visible = true;
-      if (!this.pino.screen.is_default) {
+      if (!this.pino.app.screen.is_default) {
         this.view.rect.copy_from(this.screen.view_rect);
       }
       this.view_image = new Image();
@@ -294,6 +294,6 @@ export class PinoGui {
   }
 
   get screen(): PinoScreen {
-    return this.pino.screen;
+    return this.pino.app.screen;
   }
 }

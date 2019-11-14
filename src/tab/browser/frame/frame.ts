@@ -1,6 +1,5 @@
+import { PinoElementRects } from './../../../element_rects/element_rects';
 import { PinoTab } from './../../tab';
-import { PinoElementRects, ELEMENT_MIN_SIZE } from './../../../common';
-import { misc } from './../../../misc/misc';
 import { PinoBrowser } from './../browser';
 import { Pino } from './../../../pino';
 import { IPC_V8_BRIDGE_MSG } from '../../../v8_bridge/v8_bridge_message/v8_bridge_message';
@@ -79,6 +78,29 @@ export class PinoFrame {
     return await Promise.all(element_promises);
   }
 
+  async get_random_element(
+    selector?: string
+  ): Promise<any> {
+    if (!selector) {
+      selector = '*';
+    }
+    return await this.eval(`Reflect.get_random_element(${JSON.stringify(selector)})`);
+  }
+
+  async get_internal_links(): Promise<any> {
+    const jq = await this.eval(`Reflect.get_internal_links()`);
+    const lng = await jq.length;
+    const element_promises = [];
+    for (let i = 0; i < lng; i++) {
+      element_promises.push(jq[i]);
+    }
+    return await Promise.all(element_promises);
+  }
+
+  async get_random_internal_link(): Promise<any> {
+    return await this.eval(`Reflect.get_random_internal_link()`);
+  }
+
   receive_ipc_message(
     message: ProcessMessage
   ) {
@@ -91,10 +113,7 @@ export class PinoFrame {
     const promises: Array<Promise<Rect>> = [];
     this.get_frame_rect(this, promises);
     const rects = await Promise.all(promises);
-    const result: PinoElementRects = {
-      full: new Rect(),
-      view: new Rect()
-    };
+    const result = new PinoElementRects();
     rects.forEach((rect, index) => {
       result.full.x += rect.x;
       result.full.y += rect.y;
@@ -155,11 +174,10 @@ export class PinoFrame {
     random_point?: boolean
   ): Promise<PinoElementRects> {
     let rects = await this.get_rects();
-    if (!this.pino.screen.view_rect.intersects(rects.view)) {
-      await this.scroll_to();
-      rects = await this.get_rects();
+    if (!this.pino.app.screen.view_rect.intersects(rects.view)) {
+      rects = await this.scroll_to();
     }
-    const rect = rects.view;
+    const rect = rects.view_with_padding;
     const point = new Point();
     if (random_point) {
       point.x = rect.x + Math.random() * rect.width;
@@ -168,9 +186,9 @@ export class PinoFrame {
       const horizontal_edge = false;
       if (horizontal_edge) {
         point.x = rect.x + Math.random() * rect.width;
-        point.y = rect.y + Math.random() * ELEMENT_MIN_SIZE;
+        point.y = rect.y + Math.random() * 10;
       } else {
-        point.x = rect.x + Math.random() * ELEMENT_MIN_SIZE;
+        point.x = rect.x + Math.random() * 10;
         point.y = rect.y + Math.random() * rect.height;
       }
     }
@@ -178,13 +196,14 @@ export class PinoFrame {
     return rects;
   }
 
-  async scroll_to() {
+  async scroll_to(): Promise<PinoElementRects> {
     const rects = await this.get_rects();
-    if (!this.pino.screen.view_rect.intersects(rects.view)) {
+    if (!this.pino.app.screen.view_rect.intersects(rects.view)) {
       if (this.parent) {
         this.parent.move_to();
       }
     }
+    return rects;
   }
 
   get pino(): Pino {

@@ -30,7 +30,7 @@ export class PinoBrowser {
       settings.frame_rate = this.pino.frame_rate;
       settings.web_security = false;
 
-      const browser = new Browser(
+      CEF_APP.create_browser(
         window_info,
         this.client.native,
         URL_BLANK_PAGE,
