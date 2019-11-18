@@ -178,14 +178,17 @@ export class PinoV8Proxy {
   }
 
   async move_to(): Promise<PinoElementRects> {
-    let rects = await this.get_rects();
-    if (rects.full.width > 0 && rects.full.height > 0) {
-      const view = new Rect(0, 0, this.pino.app.screen.view_rect.width, this.pino.app.screen.view_rect.height);
-      if (!view.intersects(rects.view)) {
-        rects = await this.scroll_to();
+    let [frame_rects, element_rects] = await Promise.all([
+      this.frame.get_rects(),
+      this.get_rects()
+    ]);
+    if (element_rects.full.width > 0 && element_rects.full.height > 0) {
+      if (!frame_rects.view.intersects(element_rects.view)) {
+        element_rects = await this.scroll_to();
+        frame_rects = await this.frame.get_rects();
       }
-      const rect = rects.view_with_padding;
-      if (view.intersects(rect)) {
+      const rect = element_rects.view_with_padding;
+      if (frame_rects.view.intersects(rect)) {
         await this.tab.move_to(new Point(
           rect.x + Math.random() * rect.width,
           rect.y + Math.random() * rect.height
@@ -194,7 +197,7 @@ export class PinoV8Proxy {
         throw new Error('Element is not in view');
       }
     }
-    return rects;
+    return element_rects;
   }
 
   async scroll_to(): Promise<PinoElementRects> {
@@ -216,7 +219,10 @@ export class PinoV8Proxy {
         element_rects = await this.get_rects();
         if (rect_before_scroll.top === element_rects.full.top) {
           tries++;
-          await this.frame.move_to();
+          await this.frame.move_to(new Point(
+            Math.random() * frame_rects.view.width,
+            Math.random() * frame_rects.view.height
+          ));
         }
       }
     }

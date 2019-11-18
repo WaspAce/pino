@@ -81,20 +81,15 @@ export class PinoFrame {
       rects = await this.move_to();
     }
     const with_padding = rects.view_with_padding;
+    const direction = Math.sign(distance);
     const start_point = with_padding.center;
     const end_point = new Point();
-    const direction = -Math.sign(distance);
-    let scroll_distance = TOUCH_SCROLL_DELTA_DEFAULT;
-    if (direction < 0) {
-      scroll_distance = Math.min(start_point.y, TOUCH_SCROLL_DELTA_DEFAULT);
-    } else {
-      scroll_distance = Math.min(this.pino.app.screen.view_rect.height - start_point.y, TOUCH_SCROLL_DELTA_DEFAULT);
-    }
+    const scroll_distance = TOUCH_SCROLL_DELTA_DEFAULT;
     const scroll_count = Math.ceil(Math.abs(distance / scroll_distance));
     start_point.x = with_padding.x + Math.random() * (with_padding.width - 20);
     for (let i = 0; i < scroll_count; i++) {
       start_point.x = start_point.x + 10 - Math.random() * 20;
-      end_point.y = start_point.y + direction * scroll_distance;
+      end_point.y = start_point.y - direction * scroll_distance;
       end_point.x = start_point.x + 10 - Math.random() * 20;
       const path = new BezierPath(
         start_point,
@@ -227,35 +222,6 @@ export class PinoFrame {
     return result;
   }
 
-  async higilight(
-    color: string
-  ) {
-    if (this.pino.gui) {
-      const rects = await this.get_rects();
-      if (
-        this.higilight_image.x !== rects.view.x ||
-        this.higilight_image.y !== rects.view.y ||
-        this.higilight_image.width !== rects.view.width ||
-        this.higilight_image.height !== rects.view.height
-      ) {
-        this.higilight_image.x = rects.view.x;
-        this.higilight_image.y = rects.view.y;
-        this.higilight_image.width = rects.view.width;
-        this.higilight_image.height = rects.view.height;
-        this.higilight_image.clear();
-        for (let i = 0; i < rects.view.width; i++) {
-          this.higilight_image.set_pixel(i, 0, color);
-          this.higilight_image.set_pixel(i, rects.view.height - 1, color);
-        }
-        for (let i = 0; i < rects.view.height; i++) {
-          this.higilight_image.set_pixel(0, i, color);
-          this.higilight_image.set_pixel(rects.view.width - 1, i, color);
-        }
-        this.pino.gui.add_image(this.higilight_image);
-      }
-    }
-  }
-
   async move_to(
     frame_point?: Point
   ): Promise<PinoElementRects> {
@@ -299,10 +265,6 @@ export class PinoFrame {
           if (rect_before_scroll.top === rects.full.top) {
             tries++;
             await this.parent.move_to(new Point(10, 10));
-            await this.tab.move_to(new Point(
-              this.tab.last_mouse_point.x + 2,
-              this.tab.last_mouse_point.y + 2
-            ));
           }
         }
       }
