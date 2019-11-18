@@ -224,7 +224,8 @@ export class PinoTab {
         this.last_mouse_point,
         point,
         this.pino.app.screen.view_rect,
-        MOUSE_DEFAULT_MOVE_SPEED
+        MOUSE_DEFAULT_MOVE_SPEED,
+        true
       );
       for (const path_point of path.points) {
         const event = new MouseEvent();

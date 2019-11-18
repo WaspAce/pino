@@ -84,23 +84,29 @@ export class PinoFrame {
     const direction = Math.sign(distance);
     const start_point = with_padding.center;
     const end_point = new Point();
-    const scroll_distance = TOUCH_SCROLL_DELTA_DEFAULT;
+    let scroll_distance = TOUCH_SCROLL_DELTA_DEFAULT;
+    if (direction > 0) {
+      scroll_distance = Math.min(Math.abs(distance), start_point.y - 20);
+    } else {
+      scroll_distance = Math.min(Math.abs(distance), this.pino.app.screen.view_rect.height - start_point.y - 20);
+    }
     const scroll_count = Math.ceil(Math.abs(distance / scroll_distance));
     start_point.x = with_padding.x + Math.random() * (with_padding.width - 20);
     for (let i = 0; i < scroll_count; i++) {
       start_point.x = start_point.x + 10 - Math.random() * 20;
       end_point.y = start_point.y - direction * scroll_distance;
-      end_point.x = start_point.x + 10 - Math.random() * 20;
+      end_point.x = start_point.x + 40 - Math.random() * 80;
       const path = new BezierPath(
         start_point,
         end_point,
         new Rect(
-          start_point.x - 20,
-          start_point.y,
-          end_point.x + 20,
-          end_point.y
+          Math.min(start_point.x, end_point.x),
+          Math.min(start_point.y, end_point.y),
+          Math.abs(end_point.x - start_point.x),
+          Math.abs(end_point.y - start_point.y)
         ),
-        misc.random_int(TOUCH_MOVE_SPEED_MIN, TOUCH_MOVE_SPEED_MAX)
+        misc.random_int(TOUCH_MOVE_SPEED_MIN, TOUCH_MOVE_SPEED_MAX),
+        false
       );
       const event = new TouchEvent();
       event.id = 1;

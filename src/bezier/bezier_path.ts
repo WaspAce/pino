@@ -63,18 +63,22 @@ export class BezierPath {
   }
 
   private calculate_reference() {
-    const control_points = this.get_control_points(this.start_point, this.end_point);
-    let step_count = this.get_step_count(this.get_control_points_count(this.start_point, this.end_point));
-    if (step_count < REFERENCE_MIN_STEP_COUNT) {
-      step_count = REFERENCE_MIN_STEP_COUNT;
+    if (this.split) {
+      const control_points = this.get_control_points(this.start_point, this.end_point);
+      let step_count = this.get_step_count(this.get_control_points_count(this.start_point, this.end_point));
+      if (step_count < REFERENCE_MIN_STEP_COUNT) {
+        step_count = REFERENCE_MIN_STEP_COUNT;
+      }
+      const curve = new BezierCurve(
+        this.start_point,
+        this.end_point,
+        control_points,
+        step_count
+      );
+      this.reference_points = curve.points;
+    } else {
+      this.reference_points = [this.start_point, this.end_point];
     }
-    const curve = new BezierCurve(
-      this.start_point,
-      this.end_point,
-      control_points,
-      step_count
-    );
-    this.reference_points = curve.points;
   }
 
   private calculate_curves() {
@@ -98,7 +102,8 @@ export class BezierPath {
     private readonly start_point: Point,
     private readonly end_point: Point,
     private readonly view_rect: Rect,
-    private readonly speed: number
+    private readonly speed: number,
+    private readonly split: boolean
   ) {
     this.calculate_reference();
     this.calculate_curves();
