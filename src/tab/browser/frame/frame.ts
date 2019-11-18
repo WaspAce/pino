@@ -1,3 +1,14 @@
+import { misc } from './../../../misc/misc';
+import { BezierPath } from './../../../bezier/bezier_path';
+import {
+  MOUSE_SCROLL_DELTA_DEFAULT,
+  SCROLL_MAX_TRIES,
+  TOUCH_MOVE_SPEED_MIN,
+  TOUCH_MOVE_SPEED_MAX,
+  TOUCH_MIN_INTERVAL_MS,
+  TOUCH_MAX_INTERVAL_MS,
+  TOUCH_SCROLL_DELTA_DEFAULT
+} from './../../../common';
 import { PinoElementRects } from './../../../element_rects/element_rects';
 import { PinoTab } from './../../tab';
 import { PinoBrowser } from './../browser';
@@ -41,6 +52,81 @@ export class PinoFrame {
           ));
         });
       }));
+    }
+  }
+
+  private async scroll_mouse(
+    distance: number
+  ) {
+    const rects = await this.get_rects();
+    if (!rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
+      await this.move_to();
+    }
+    const direction = -Math.sign(distance);
+    const scroll_count = Math.ceil(Math.abs(distance / MOUSE_SCROLL_DELTA_DEFAULT));
+    const event = new MouseEvent();
+    event.x = this.tab.last_mouse_point.x;
+    event.y = this.tab.last_mouse_point.y;
+    for (let i = 0; i < scroll_count; i++) {
+      this.tab.send_mouse_wheel_event(event, direction * MOUSE_SCROLL_DELTA_DEFAULT);
+      await misc.sleep(50 + Math.random() * 50);
+    }
+  }
+
+  private async scroll_touch(
+    distance: number
+  ) {
+    let rects = await this.get_rects();
+    if (!rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
+      rects = await this.move_to();
+    }
+    const with_padding = rects.view_with_padding;
+    const start_point = with_padding.center;
+    const end_point = new Point();
+    const direction = -Math.sign(distance);
+    let scroll_distance = TOUCH_SCROLL_DELTA_DEFAULT;
+    if (direction < 0) {
+      scroll_distance = Math.min(start_point.y, TOUCH_SCROLL_DELTA_DEFAULT);
+    } else {
+      scroll_distance = Math.min(this.pino.app.screen.view_rect.height - start_point.y, TOUCH_SCROLL_DELTA_DEFAULT);
+    }
+    const scroll_count = Math.ceil(Math.abs(distance / scroll_distance));
+    start_point.x = with_padding.x + Math.random() * (with_padding.width - 20);
+    for (let i = 0; i < scroll_count; i++) {
+      start_point.x = start_point.x + 10 - Math.random() * 20;
+      end_point.y = start_point.y + direction * scroll_distance;
+      end_point.x = start_point.x + 10 - Math.random() * 20;
+      const path = new BezierPath(
+        start_point,
+        end_point,
+        new Rect(
+          start_point.x - 20,
+          start_point.y,
+          end_point.x + 20,
+          end_point.y
+        ),
+        misc.random_int(TOUCH_MOVE_SPEED_MIN, TOUCH_MOVE_SPEED_MAX)
+      );
+      const event = new TouchEvent();
+      event.id = 1;
+      event.modifiers = [EventFlags.EVENTFLAG_LEFT_MOUSE_BUTTON];
+      event.pointer_type = PointerType.CEF_POINTER_TYPE_TOUCH;
+      event.type_ = TouchEventType.CEF_TET_PRESSED;
+      event.x = start_point.x;
+      event.y = start_point.y;
+      this.tab.send_touch_event(event);
+      await misc.sleep(TOUCH_MIN_INTERVAL_MS);
+      path.points.forEach(async point => {
+        event.type_ = TouchEventType.CEF_TET_MOVED;
+        event.x = point.x;
+        event.y = point.y;
+        this.tab.send_touch_event(event);
+        await misc.sleep(misc.random_int(TOUCH_MIN_INTERVAL_MS, TOUCH_MAX_INTERVAL_MS));
+      });
+      event.type_ = TouchEventType.CEF_TET_RELEASED;
+      event.x = end_point.x;
+      event.y = end_point.y;
+      this.tab.send_touch_event(event);
     }
   }
 
@@ -171,39 +257,67 @@ export class PinoFrame {
   }
 
   async move_to(
-    random_point?: boolean
+    frame_point?: Point
   ): Promise<PinoElementRects> {
     let rects = await this.get_rects();
-    if (!this.pino.app.screen.view_rect.intersects(rects.view)) {
+    const view = new Rect(0, 0, this.pino.app.screen.view_rect.width, this.pino.app.screen.view_rect.height);
+    if (!view.intersects(rects.view_with_padding)) {
       rects = await this.scroll_to();
     }
-    const rect = rects.view_with_padding;
     const point = new Point();
-    if (random_point) {
+    const rect = rects.view_with_padding;
+    if (frame_point) {
+      point.x = rects.full.x + frame_point.x;
+      point.y = rects.full.y + frame_point.y;
+    } else if (!rect.has_point(this.tab.last_mouse_point)) {
       point.x = rect.x + Math.random() * rect.width;
       point.y = rect.y + Math.random() * rect.height;
-    } else {
-      const horizontal_edge = false;
-      if (horizontal_edge) {
-        point.x = rect.x + Math.random() * rect.width;
-        point.y = rect.y + Math.random() * 10;
-      } else {
-        point.x = rect.x + Math.random() * 10;
-        point.y = rect.y + Math.random() * rect.height;
-      }
     }
     await this.tab.move_to(point);
     return rects;
   }
 
   async scroll_to(): Promise<PinoElementRects> {
-    const rects = await this.get_rects();
-    if (!this.pino.app.screen.view_rect.intersects(rects.view)) {
-      if (this.parent) {
-        this.parent.move_to();
+    let rects = await this.get_rects();
+    if (this.parent) {
+      const view = new Rect(0, 0, this.pino.app.screen.view_rect.width, this.pino.app.screen.view_rect.height);
+      if (!view.intersects(rects.view_with_padding)) {
+        const parent_rects = await this.parent.get_rects();
+        if (!parent_rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
+          await this.parent.move_to();
+        }
+        rects = await this.get_rects();
+        let tries = 0;
+        let rect_before_scroll = new Rect();
+        while (
+          !!view.intersects(rects.view_with_padding) &&
+          tries < SCROLL_MAX_TRIES
+        ) {
+          rect_before_scroll = rects.full;
+          await this.scroll(rects.view_with_padding.center.y);
+          rects = await this.get_rects();
+          if (rect_before_scroll.top === rects.full.top) {
+            tries++;
+            await this.parent.move_to(new Point(10, 10));
+            await this.tab.move_to(new Point(
+              this.tab.last_mouse_point.x + 2,
+              this.tab.last_mouse_point.y + 2
+            ));
+          }
+        }
       }
     }
     return rects;
+  }
+
+  async scroll(
+    distance: number
+  ) {
+    if (this.pino.is_mobile) {
+      await this.scroll_touch(distance);
+    } else {
+      await this.scroll_mouse(distance);
+    }
   }
 
   get pino(): Pino {

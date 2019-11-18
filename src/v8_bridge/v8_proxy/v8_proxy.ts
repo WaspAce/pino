@@ -177,46 +177,15 @@ export class PinoV8Proxy {
     return result;
   }
 
-  async highlight(
-    color: string
-  ) {
-    if (this.pino.gui) {
-      const rects = await this.get_rects();
-      if (this.pino.app.screen.view_rect.intersects(rects.full)) {
-        const rect = rects.full;
-        if (
-          this.higilight_image.x !== rect.x ||
-          this.higilight_image.y !== rect.y ||
-          this.higilight_image.width !== rect.width ||
-          this.higilight_image.height !== rect.height
-        ) {
-          this.higilight_image.x = rect.x;
-          this.higilight_image.y = rect.y;
-          this.higilight_image.width = rect.width;
-          this.higilight_image.height = rect.height;
-          this.higilight_image.clear();
-          for (let i = 0; i < rect.width; i++) {
-            this.higilight_image.set_pixel(i, 0, color);
-            this.higilight_image.set_pixel(i, rect.height - 1, color);
-          }
-          for (let i = 0; i < rect.height; i++) {
-            this.higilight_image.set_pixel(0, i, color);
-            this.higilight_image.set_pixel(rect.width - 1, i, color);
-          }
-          this.pino.gui.add_image(this.higilight_image);
-        }
-      }
-    }
-  }
-
   async move_to(): Promise<PinoElementRects> {
     let rects = await this.get_rects();
     if (rects.full.width > 0 && rects.full.height > 0) {
-      if (!this.pino.app.screen.view_rect.intersects(rects.view)) {
+      const view = new Rect(0, 0, this.pino.app.screen.view_rect.width, this.pino.app.screen.view_rect.height);
+      if (!view.intersects(rects.view)) {
         rects = await this.scroll_to();
       }
       const rect = rects.view_with_padding;
-      if (this.pino.app.screen.view_rect.intersects(rect)) {
+      if (view.intersects(rect)) {
         await this.tab.move_to(new Point(
           rect.x + Math.random() * rect.width,
           rect.y + Math.random() * rect.height
@@ -229,37 +198,25 @@ export class PinoV8Proxy {
   }
 
   async scroll_to(): Promise<PinoElementRects> {
-    let frame_rects: PinoElementRects;
-    frame_rects = await this.frame.move_to();
+    let frame_rects = await this.frame.get_rects();
+    if (!frame_rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
+      frame_rects = await this.frame.move_to();
+    }
     let element_rects = await this.get_rects();
-    if (this.pino.app.screen.view_rect.intersects(frame_rects.view)) {
+    if (!frame_rects.view.intersects(element_rects.view_with_padding)) {
       let rect_before_scroll = new Rect();
       let tries = 0;
-      let direction = 0;
-      if (element_rects.view.top > frame_rects.view.bottom) {
-        direction = -1;
-      } else {
-        direction = 1;
-      }
       while (
-        !frame_rects.view.intersects(element_rects.view) &&
+        !frame_rects.view.intersects(element_rects.view_with_padding) &&
         tries < SCROLL_MAX_TRIES
       ) {
         rect_before_scroll = element_rects.full;
-        if (this.pino.is_mobile) {
-          await this.frame.tab.scroll(direction * TOUCH_SCROLL_DELTA_DEFAULT);
-        } else {
-          await this.frame.tab.scroll(direction * MOUSE_SCROLL_DELTA_DEFAULT);
-        }
-        await misc.sleep(50 + Math.random() * 50);
+        frame_rects = await this.frame.get_rects();
+        await this.frame.scroll(element_rects.full.center.y - frame_rects.view.center.y);
         element_rects = await this.get_rects();
         if (rect_before_scroll.top === element_rects.full.top) {
           tries++;
           await this.frame.move_to();
-          await this.tab.move_to(new Point(
-            this.tab.last_mouse_point.x + 2,
-            this.tab.last_mouse_point.y + 2
-          ));
         }
       }
     }

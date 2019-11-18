@@ -1,10 +1,7 @@
 import {
   DEFAULT_TYPE_SPEED,
   MIN_TYPE_INTERVAL_MS,
-  MOUSE_DEFAULT_MOVE_SPEED,
-  TOUCH_MIN_INTERVAL_MS,
-  TOUCH_MAX_INTERVAL_MS,
-  TOUCH_DEFAULT_MOVE_SPEED
+  MOUSE_DEFAULT_MOVE_SPEED
 } from './../common';
 import { misc } from './../misc/misc';
 import { BezierPath } from './../bezier/bezier_path';
@@ -214,61 +211,6 @@ export class PinoTab {
       result.push(...arr);
     });
     return result;
-  }
-
-  async scroll(
-    delta: number,
-    horizontal?: boolean
-  ) {
-    if (this.pino.is_mobile) {
-      const start_point = new Point(this.last_mouse_point.x, this.last_mouse_point.y);
-      const end_point = new Point();
-      if (horizontal) {
-        end_point.y = start_point.y + (10 - Math.random() * 20);
-        end_point.x = start_point.x + delta;
-      } else {
-        end_point.y = start_point.y + delta;
-        end_point.x = start_point.x + (10 - Math.random() * 20);
-      }
-
-      const event = new TouchEvent();
-      event.id = 1;
-      event.modifiers = [EventFlags.EVENTFLAG_LEFT_MOUSE_BUTTON];
-      event.pointer_type = PointerType.CEF_POINTER_TYPE_TOUCH;
-      event.type_ = TouchEventType.CEF_TET_PRESSED;
-      event.x = start_point.x;
-      event.y = start_point.y;
-      this.send_touch_event(event);
-
-      const path = new BezierPath(
-        start_point,
-        end_point,
-        this.pino.app.screen.view_rect,
-        TOUCH_DEFAULT_MOVE_SPEED
-      );
-      for (const path_point of path.points) {
-        event.type_ = TouchEventType.CEF_TET_MOVED;
-        event.x = path_point.x;
-        event.y = path_point.y;
-        this.pino.send_touch_event(event);
-        await misc.sleep(misc.random_int(TOUCH_MIN_INTERVAL_MS, TOUCH_MAX_INTERVAL_MS));
-      }
-
-      event.type_ = TouchEventType.CEF_TET_RELEASED;
-      event.x = end_point.x;
-      event.y = end_point.y;
-      this.send_touch_event(event);
-
-      this.last_mouse_point = start_point;
-    } else {
-      const event = new MouseEvent();
-      event.x = this.last_mouse_point.x;
-      event.y = this.last_mouse_point.y;
-      if (horizontal) {
-        event.modifiers = [EventFlags.EVENTFLAG_SHIFT_DOWN];
-      }
-      this.send_mouse_wheel_event(event, delta);
-    }
   }
 
   async move_to(

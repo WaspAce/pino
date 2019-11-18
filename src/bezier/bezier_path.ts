@@ -6,6 +6,7 @@ const REFERENCE_MIN_STEP_COUNT = 2;
 export class BezierPath {
 
   points: Point[] = [];
+  stop_indexes: number[] = [];
 
   private reference_points: Point[] = [];
 
@@ -88,6 +89,7 @@ export class BezierPath {
         this.get_control_points(start_point, end_point),
         step_count
       );
+      this.stop_indexes.push(this.points.length - 1);
       this.points = this.points.concat(curve.points);
     }
   }
