@@ -182,8 +182,10 @@ export class PinoTab {
     return this.browser.load(url, referrer, referrer_policy);
   }
 
-  async wait_loaded() {
-    return this.browser.wait_loaded();
+  async wait_loaded(
+    timeout_ms?: number
+  ) {
+    return this.browser.wait_loaded(timeout_ms);
   }
 
   was_hidden(
@@ -215,8 +217,9 @@ export class PinoTab {
 
   async move_to(
     point: Point,
-    mouse_leave?: boolean
+    timeout_ms: number
   ) {
+    const start_time = new Date().getTime();
     if (this.pino.is_mobile) {
       this.last_mouse_point = point;
     } else {
@@ -231,8 +234,11 @@ export class PinoTab {
         const event = new MouseEvent();
         event.x = path_point.x;
         event.y = path_point.y;
-        this.send_mouse_move_event(event, mouse_leave);
-        await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
+        this.send_mouse_move_event(event, false);
+        const remainds_ms = new Date().getTime() - start_time - timeout_ms;
+        if (remainds_ms > MIN_TYPE_INTERVAL_MS * 2) {
+          await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
+        }
       }
     }
   }

@@ -7,7 +7,8 @@ import {
   TOUCH_MOVE_SPEED_MAX,
   TOUCH_MIN_INTERVAL_MS,
   TOUCH_MAX_INTERVAL_MS,
-  TOUCH_SCROLL_DELTA_DEFAULT
+  TOUCH_SCROLL_DELTA_DEFAULT,
+  MAX_TIMEOUT_MS
 } from './../../../common';
 import { PinoElementRects } from './../../../element_rects/element_rects';
 import { PinoTab } from './../../tab';
@@ -40,8 +41,8 @@ export class PinoFrame {
       promises.push(new Promise<Rect>(resolve => {
         current_frame.parent.eval(`
           Reflect.get_child_frame_rect(
-              ${JSON.stringify(current_frame.native.url)}
-            )
+            ${JSON.stringify(current_frame.native.url)}
+          )
         `).then(response => {
           const current_frame_rect = JSON.parse(response);
           resolve(new Rect(
@@ -56,11 +57,14 @@ export class PinoFrame {
   }
 
   private async scroll_mouse(
-    distance: number
+    distance: number,
+    timeout_ms: number
   ) {
+    const start_time = new Date().getTime();
     const rects = await this.get_rects();
+    let remains_ms = timeout_ms - new Date().getTime() - start_time;
     if (!rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
-      await this.move_to();
+      await this.move_to(remains_ms);
     }
     const direction = -Math.sign(distance);
     const scroll_count = Math.ceil(Math.abs(distance / MOUSE_SCROLL_DELTA_DEFAULT));
@@ -69,16 +73,22 @@ export class PinoFrame {
     event.y = this.tab.last_mouse_point.y;
     for (let i = 0; i < scroll_count; i++) {
       this.tab.send_mouse_wheel_event(event, direction * MOUSE_SCROLL_DELTA_DEFAULT);
-      await misc.sleep(50 + Math.random() * 50);
+      remains_ms = timeout_ms - new Date().getTime() - start_time;
+      if (remains_ms > 100) {
+        await misc.sleep(50 + Math.random() * 50);
+      }
     }
   }
 
   private async scroll_touch(
-    distance: number
+    distance: number,
+    timeout_ms: number
   ) {
+    const start_time = new Date().getTime();
     let rects = await this.get_rects();
+    let remains_ms = timeout_ms - new Date().getTime() - start_time;
     if (!rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
-      rects = await this.move_to();
+      rects = await this.move_to(remains_ms);
     }
     const with_padding = rects.view_with_padding;
     const direction = Math.sign(distance);
@@ -116,19 +126,26 @@ export class PinoFrame {
       event.x = start_point.x;
       event.y = start_point.y;
       this.tab.send_touch_event(event);
-      await misc.sleep(TOUCH_MIN_INTERVAL_MS);
+      await misc.sleep(TOUCH_MAX_INTERVAL_MS);
       path.points.forEach(async point => {
         event.type_ = TouchEventType.CEF_TET_MOVED;
         event.x = point.x;
         event.y = point.y;
         this.tab.send_touch_event(event);
-        await misc.sleep(misc.random_int(TOUCH_MIN_INTERVAL_MS, TOUCH_MAX_INTERVAL_MS));
+        remains_ms = timeout_ms - new Date().getTime() - start_time;
+        if (remains_ms > TOUCH_MAX_INTERVAL_MS) {
+          await misc.sleep(misc.random_int(TOUCH_MIN_INTERVAL_MS, TOUCH_MAX_INTERVAL_MS));
+        }
       });
       event.type_ = TouchEventType.CEF_TET_RELEASED;
       event.x = end_point.x;
       event.y = end_point.y;
       this.tab.send_touch_event(event);
     }
+  }
+
+  private scroll_into_view() {
+    this.eval(`Reflect.scroll_frame_into_view(${JSON.stringify(this.native.url)})`);
   }
 
   constructor(
@@ -229,62 +246,98 @@ export class PinoFrame {
   }
 
   async move_to(
+    timeout_ms: number,
     frame_point?: Point
   ): Promise<PinoElementRects> {
+    if (!timeout_ms || timeout_ms <= 0) {
+      timeout_ms = MAX_TIMEOUT_MS;
+    }
+    const start_time = new Date().getTime();
     let rects = await this.get_rects();
-    const view = new Rect(0, 0, this.pino.app.screen.view_rect.width, this.pino.app.screen.view_rect.height);
-    if (!view.intersects(rects.view_with_padding)) {
-      rects = await this.scroll_to();
+    let remains_ms = timeout_ms - new Date().getTime() - start_time;
+    if (remains_ms > 0) {
+      const view = new Rect(0, 0, this.pino.app.screen.view_rect.width, this.pino.app.screen.view_rect.height);
+      if (!view.intersects(rects.view_with_padding)) {
+        rects = await this.scroll_to(remains_ms);
+      }
+      remains_ms = timeout_ms - new Date().getTime() - start_time;
+      if (remains_ms > 0) {
+        const point = new Point();
+        const rect = rects.view_with_padding;
+        if (frame_point) {
+          point.x = rects.full.x + frame_point.x;
+          point.y = rects.full.y + frame_point.y;
+        } else if (!rect.has_point(this.tab.last_mouse_point)) {
+          point.x = rect.x + Math.random() * rect.width;
+          point.y = rect.y + Math.random() * rect.height;
+        }
+        await this.tab.move_to(point, remains_ms);
+      }
     }
-    const point = new Point();
-    const rect = rects.view_with_padding;
-    if (frame_point) {
-      point.x = rects.full.x + frame_point.x;
-      point.y = rects.full.y + frame_point.y;
-    } else if (!rect.has_point(this.tab.last_mouse_point)) {
-      point.x = rect.x + Math.random() * rect.width;
-      point.y = rect.y + Math.random() * rect.height;
-    }
-    await this.tab.move_to(point);
     return rects;
   }
 
-  async scroll_to(): Promise<PinoElementRects> {
+  async scroll_to(
+    timeout_ms: number
+  ): Promise<PinoElementRects> {
+    if (!timeout_ms || timeout_ms <= 0) {
+      timeout_ms = MAX_TIMEOUT_MS;
+    }
+    const start_time = new Date().getTime();
+    let remains_ms = timeout_ms - new Date().getTime() - start_time;
     let rects = await this.get_rects();
     if (this.parent) {
       const view = new Rect(0, 0, this.pino.app.screen.view_rect.width, this.pino.app.screen.view_rect.height);
       if (!view.intersects(rects.view_with_padding)) {
         const parent_rects = await this.parent.get_rects();
         if (!parent_rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
-          await this.parent.move_to();
+          remains_ms = timeout_ms - new Date().getTime() - start_time;
+          await this.parent.move_to(remains_ms);
         }
-        rects = await this.get_rects();
-        let tries = 0;
-        let rect_before_scroll = new Rect();
-        while (
-          !!view.intersects(rects.view_with_padding) &&
-          tries < SCROLL_MAX_TRIES
-        ) {
-          rect_before_scroll = rects.full;
-          await this.scroll(rects.view_with_padding.center.y);
+        remains_ms = timeout_ms - new Date().getTime() - start_time;
+        if (remains_ms > 0) {
           rects = await this.get_rects();
-          if (rect_before_scroll.top === rects.full.top) {
-            tries++;
-            await this.parent.move_to(new Point(10, 10));
+          let tries = 0;
+          let rect_before_scroll = new Rect();
+          while (
+            !!view.intersects(rects.view_with_padding) &&
+            tries < SCROLL_MAX_TRIES &&
+            remains_ms > 0
+          ) {
+            rect_before_scroll = rects.full;
+            remains_ms = timeout_ms - new Date().getTime() - start_time;
+            await this.scroll(rects.view_with_padding.center.y, remains_ms);
+            remains_ms = timeout_ms - new Date().getTime() - start_time;
+            if (remains_ms > 0) {
+              rects = await this.get_rects();
+              if (rect_before_scroll.top === rects.full.top) {
+                tries++;
+                remains_ms = timeout_ms - new Date().getTime() - start_time;
+                if (remains_ms > 0) {
+                  await this.parent.move_to(remains_ms, new Point(10, 10));
+                }
+              }
+              remains_ms = timeout_ms - new Date().getTime() - start_time;
+            }
           }
         }
       }
+    }
+    if (remains_ms < 1) {
+      this.scroll_into_view();
+      rects = await this.get_rects();
     }
     return rects;
   }
 
   async scroll(
-    distance: number
+    distance: number,
+    timeout_ms: number
   ) {
     if (this.pino.is_mobile) {
-      await this.scroll_touch(distance);
+      await this.scroll_touch(distance, timeout_ms);
     } else {
-      await this.scroll_mouse(distance);
+      await this.scroll_mouse(distance, timeout_ms);
     }
   }
 

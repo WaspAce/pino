@@ -2,11 +2,8 @@ import { PinoElementRects } from './../../element_rects/element_rects';
 import { PinoTab } from './../../tab/tab';
 import { Pino } from './../../pino';
 import {
-  MOUSE_SCROLL_DELTA_DEFAULT,
-  SCROLL_MAX_TRIES,
-  TOUCH_SCROLL_DELTA_DEFAULT
+  SCROLL_MAX_TRIES
 } from './../../common';
-import { misc } from './../../misc/misc';
 import { V8POOl_NAME } from './../v8_pool/v8_pool';
 import { PinoV8SetPropertyOptions, PinoV8CallMethodOptions } from './../v8_payload_types';
 import { PinoV8GetPropertyOptions } from '../v8_payload_types';
@@ -139,6 +136,15 @@ export class PinoV8Proxy {
     return result;
   }
 
+  private scroll_into_view() {
+    this.frame.eval(`
+      (() => {
+        const element = Reflect.${V8POOl_NAME}[${this.pool_id}];
+        element.scrollIntoView();
+      })();
+    `);
+  }
+
   constructor(
     private readonly bridge: PinoV8Bridge,
     private readonly pool_id: number,
@@ -177,22 +183,27 @@ export class PinoV8Proxy {
     return result;
   }
 
-  async move_to(): Promise<PinoElementRects> {
+  async move_to(
+    timeout_ms: number
+  ): Promise<PinoElementRects> {
+    const start_time = new Date().getTime();
     let [frame_rects, element_rects] = await Promise.all([
       this.frame.get_rects(),
       this.get_rects()
     ]);
+    let remains_ms = timeout_ms - new Date().getTime() - start_time;
     if (element_rects.full.width > 0 && element_rects.full.height > 0) {
       if (!frame_rects.view.intersects(element_rects.view)) {
-        element_rects = await this.scroll_to();
+        element_rects = await this.scroll_to(remains_ms);
         frame_rects = await this.frame.get_rects();
       }
       const rect = element_rects.view_with_padding;
       if (frame_rects.view.intersects(rect)) {
+        remains_ms = timeout_ms - new Date().getTime() - start_time;
         await this.tab.move_to(new Point(
           rect.x + Math.random() * rect.width,
           rect.y + Math.random() * rect.height
-        ));
+        ), remains_ms);
       } else {
         throw new Error('Element is not in view');
       }
@@ -200,10 +211,14 @@ export class PinoV8Proxy {
     return element_rects;
   }
 
-  async scroll_to(): Promise<PinoElementRects> {
+  async scroll_to(
+    timeout_ms: number
+  ): Promise<PinoElementRects> {
+    const start_time = new Date().getTime();
     let frame_rects = await this.frame.get_rects();
+    let remains_ms = timeout_ms - new Date().getTime() - start_time;
     if (!frame_rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
-      frame_rects = await this.frame.move_to();
+      frame_rects = await this.frame.move_to(remains_ms);
     }
     let element_rects = await this.get_rects();
     if (!frame_rects.view.intersects(element_rects.view_with_padding)) {
@@ -211,26 +226,35 @@ export class PinoV8Proxy {
       let tries = 0;
       while (
         !frame_rects.view.intersects(element_rects.view_with_padding) &&
-        tries < SCROLL_MAX_TRIES
+        tries < SCROLL_MAX_TRIES &&
+        remains_ms > 0
       ) {
         rect_before_scroll = element_rects.full;
         frame_rects = await this.frame.get_rects();
-        await this.frame.scroll(element_rects.full.center.y - frame_rects.view.center.y);
+        remains_ms = timeout_ms - new Date().getTime() - start_time;
+        await this.frame.scroll(element_rects.full.center.y - frame_rects.view.center.y, remains_ms);
         element_rects = await this.get_rects();
         if (rect_before_scroll.top === element_rects.full.top) {
           tries++;
-          await this.frame.move_to(new Point(
+          remains_ms = timeout_ms - new Date().getTime() - start_time;
+          await this.frame.move_to(remains_ms, new Point(
             Math.random() * frame_rects.view.width,
             Math.random() * frame_rects.view.height
           ));
         }
       }
     }
+    if (!frame_rects.view.intersects(element_rects.view)) {
+      this.scroll_into_view();
+      element_rects = await this.get_rects();
+    }
     return element_rects;
   }
 
-  async click() {
-    await this.move_to();
+  async click(
+    timeout_ms: number
+  ) {
+    await this.move_to(timeout_ms);
     this.tab.click();
   }
 

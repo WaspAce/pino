@@ -40,7 +40,7 @@ class Test {
     this.divs = await this.tab.find_elements('div[class*="element"]');
     for (const div of this.divs) {
       console.log('move to: ', await div.className);
-      await div.move_to();
+      await div.move_to(10);
       console.log('moved to: ', await div.className);
     }
   }

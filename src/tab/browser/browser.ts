@@ -39,7 +39,9 @@ export class PinoBrowser {
     }
   }
 
-  private start_load_timer() {
+  private start_load_timer(
+    timeout_ms: number
+  ) {
     if (this.load_timeout > -1) {
       clearTimeout(this.load_timeout);
       this.load_timeout = -1;
@@ -49,7 +51,7 @@ export class PinoBrowser {
       this.page_loaded();
       this.subprocess_loaded();
     },
-    this.pino.load_timeout_ms);
+    timeout_ms);
   }
 
   private wrap_js_code(
@@ -280,12 +282,16 @@ export class PinoBrowser {
     });
   }
 
-  async wait_loaded() {
+  async wait_loaded(
+    timeout_ms?: number
+  ) {
     const promises = [
       this.wait_subprocess_loaded(),
       this.wait_page_loaded()
     ];
-    this.start_load_timer();
+    if (timeout_ms && timeout_ms > 0) {
+      this.start_load_timer(timeout_ms);
+    }
     await Promise.all(promises);
   }
 

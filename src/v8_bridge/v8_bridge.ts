@@ -102,7 +102,7 @@ export class PinoV8Bridge {
     if (!this.context.is_valid) {
       return this.get_invalid_context_response();
     }
-    const eval_result = this.context.eval(code);
+    const eval_result = this.context.eval(`try{ ${code} } catch(e) {}`);
     if (eval_result.result) {
       return this.get_value_response(eval_result.ret_val, message_id);
     } else if (eval_result.exception) {
@@ -254,7 +254,7 @@ export class PinoV8Bridge {
       extension.wait_for_data(this.frame.identifier).then(value => {
         resolve(this.get_value_response(value, message_id));
       });
-      const eval_result = this.context.eval(code);
+      const eval_result = this.context.eval(`try{ ${code} } catch(e) {}`);
       if (eval_result.result) {
         // 
       } else if (eval_result.exception) {

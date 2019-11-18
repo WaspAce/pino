@@ -19,7 +19,6 @@ export class Pino {
   };
 
   frame_rate = 60;
-  load_timeout_ms = 20000;
   block_subframes = false;
   is_mobile = false;
   on_painted: RenderHandlerOnPainted;
