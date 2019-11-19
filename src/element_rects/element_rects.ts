@@ -1,7 +1,12 @@
 const ELEMENT_RECT_PADDING_PERCENT = 10;
 const ELEMENT_RECT_PADDING_PX = 5;
 
-export class PinoElementRects {
+export interface IPinoElementRects {
+  full: Rect;
+  view: Rect;
+}
+
+export class PinoElementRects implements IPinoElementRects {
   full = new Rect();
   view = new Rect();
 

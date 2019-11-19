@@ -1,30 +1,26 @@
-import { PinoElementRects } from './../../element_rects/element_rects';
-import { PinoTab } from './../../tab/tab';
-import { Pino } from './../../pino';
-import {
-  SCROLL_MAX_TRIES
-} from './../../common';
-import { V8POOl_NAME } from './../v8_pool/v8_pool';
-import { PinoV8SetPropertyOptions, PinoV8CallMethodOptions } from './../v8_payload_types';
+import { PinoElementRects } from '../../../element_rects/element_rects';
+import { PinoTab } from '../../tab';
+import { Pino } from '../../../pino';
+import { SCROLL_MAX_TRIES } from '../../../common';
+import { V8POOl_NAME } from '../../../subprocess/v8_bridge/v8_pool/v8_pool';
+import { PinoV8SetPropertyOptions, PinoV8CallMethodOptions } from '../v8_payload_types';
 import { PinoV8GetPropertyOptions } from '../v8_payload_types';
-import { PinoV8ValueType, get_value_type } from './../v8_value/v8_value_type';
-import { PinoV8BridgeMessage, V8BridgeAction } from './../v8_bridge_message/v8_bridge_message';
-import { PinoV8Bridge, V8BRIDGE_RESPONE_TIMEOUT_MS } from '../v8_bridge';
-import { PinoV8Value } from '../v8_value/v8_value';
-import { PinoFrame } from '../../tab/browser/frame/frame';
+import { PinoV8ValueType, get_value_type } from '../../../subprocess/v8_bridge/v8_value/v8_value_type';
+import { PinoV8BridgeMessage, V8BridgeAction } from '../v8_bridge_message/v8_bridge_message';
+import { PinoV8Value } from '../../../subprocess/v8_bridge/v8_value/v8_value';
+import { PinoFrame } from '../../browser/frame/frame';
+import { PinoV8BridgeBrowser, V8BRIDGE_RESPONE_TIMEOUT_MS } from '../v8_bridge_browser/v8_bridge_browser';
 
 export class PinoV8Proxy {
 
   native: JSObjectProxy;
   is_bridge_proxy = true;
 
-  private higilight_image: Image;
-
   private async send_get_property_request(
     name: string
   ): Promise<any> {
     const request = new PinoV8BridgeMessage();
-    request.action = V8BridgeAction.MAIN_GET_PROPERTY;
+    request.action = V8BridgeAction.BROWSER_GET_PROPERTY;
     const options: PinoV8GetPropertyOptions = {
       parent_id: this.pool_id,
       property_name: name
@@ -60,7 +56,7 @@ export class PinoV8Proxy {
       value: pino_value
     };
     const request = new PinoV8BridgeMessage();
-    request.action = V8BridgeAction.MAIN_SET_PROPERTY;
+    request.action = V8BridgeAction.BROWSER_SET_PROPERTY;
     request.payload = JSON.stringify(options);
     this.bridge.send_message(request, V8BRIDGE_RESPONE_TIMEOUT_MS);
   }
@@ -72,12 +68,8 @@ export class PinoV8Proxy {
       return this;
     } else if (this[name]) {
       return this[name];
-    } else {
-      return new Promise<any>(resolve => {
-        this.send_get_property_request(name).then(value => {
-          resolve(value);
-        });
-      });
+    } else if (name !== 'then') {
+      return this.send_get_property_request(name);
     }
   }
 
@@ -92,7 +84,7 @@ export class PinoV8Proxy {
     name: string
   ): Promise<any> {
     const request = new PinoV8BridgeMessage();
-    request.action = V8BridgeAction.MAIN_CALL_METHOD;
+    request.action = V8BridgeAction.BROWSER_CALL_METHOD;
     const options: PinoV8CallMethodOptions = {
       parent_id: this.pool_id,
       method_name: name
@@ -111,29 +103,7 @@ export class PinoV8Proxy {
     name: string,
     ...args: any[]
   ): any {
-    return new Promise<any>(resolve => {
-      this.send_call_method_request(name).then(value => {
-        resolve(value);
-      });
-    });
-  }
-
-  private async get_rect(): Promise<Rect> {
-    const result = new Rect();
-    const rect_response = await this.frame.eval(`
-      (() => {
-        const element = Reflect.${V8POOl_NAME}[${this.pool_id}];
-        return JSON.stringify(Reflect.get_element_rect(element));
-      })();
-    `);
-    if (rect_response) {
-      const rect = JSON.parse(rect_response);
-      result.x = rect.x;
-      result.y = rect.y;
-      result.width = rect.width;
-      result.height = rect.height;
-    }
-    return result;
+    return this.send_call_method_request(name);
   }
 
   private scroll_into_view() {
@@ -146,7 +116,7 @@ export class PinoV8Proxy {
   }
 
   constructor(
-    private readonly bridge: PinoV8Bridge,
+    private readonly bridge: PinoV8BridgeBrowser,
     private readonly pool_id: number,
     private readonly frame: PinoFrame
   ) {
@@ -154,44 +124,22 @@ export class PinoV8Proxy {
     this.native.get_property = this.do_on_get_property;
     this.native.set_property = this.do_on_set_property;
     this.native.call_method = this.do_on_call_method;
-    if (this.pino.gui) {
-      this.higilight_image = new Image();
-    }
   }
 
   async get_rects(): Promise<PinoElementRects> {
-    const [frame_rects, element_rect] = await Promise.all([
-      this.frame.get_rects(),
-      this.get_rect()
-    ]);
-    const result: PinoElementRects = new PinoElementRects();
-    result.full.x = frame_rects.full.x + element_rect.x;
-    result.full.y = frame_rects.full.y + element_rect.y;
-    result.full.width = element_rect.width;
-    result.full.height = element_rect.height;
-
-    const view_right = Math.min(result.full.right, result.full.x + element_rect.right, frame_rects.view.right);
-    const view_bottom = Math.min(result.full.bottom, result.full.x + element_rect.bottom, frame_rects.view.bottom);
-    result.view.x = Math.max(result.full.x, result.view.x);
-    result.view.y = Math.max(result.full.y, result.view.y);
-    result.view.right = view_right;
-    result.view.bottom = view_bottom;
-    if (result.view.width < 0 || result.view.height < 0) {
-      result.view.width = 0;
-      result.view.height = 0;
-    }
-    return result;
+    return await this.bridge.get_element_rects(this.pool_id);
   }
 
   async move_to(
     timeout_ms: number
   ): Promise<PinoElementRects> {
+    this.frame.check_is_valid();
     const start_time = new Date().getTime();
     let [frame_rects, element_rects] = await Promise.all([
       this.frame.get_rects(),
       this.get_rects()
     ]);
-    let remains_ms = timeout_ms - new Date().getTime() - start_time;
+    let remains_ms = start_time + timeout_ms - new Date().getTime();
     if (element_rects.full.width > 0 && element_rects.full.height > 0) {
       if (!frame_rects.view.intersects(element_rects.view)) {
         element_rects = await this.scroll_to(remains_ms);
@@ -199,7 +147,7 @@ export class PinoV8Proxy {
       }
       const rect = element_rects.view_with_padding;
       if (frame_rects.view.intersects(rect)) {
-        remains_ms = timeout_ms - new Date().getTime() - start_time;
+        remains_ms = start_time + timeout_ms - new Date().getTime();
         await this.tab.move_to(new Point(
           rect.x + Math.random() * rect.width,
           rect.y + Math.random() * rect.height
@@ -214,9 +162,10 @@ export class PinoV8Proxy {
   async scroll_to(
     timeout_ms: number
   ): Promise<PinoElementRects> {
+    this.frame.check_is_valid();
     const start_time = new Date().getTime();
     let frame_rects = await this.frame.get_rects();
-    let remains_ms = timeout_ms - new Date().getTime() - start_time;
+    let remains_ms = start_time + timeout_ms - new Date().getTime();
     if (!frame_rects.view_with_padding.has_point(this.tab.last_mouse_point)) {
       frame_rects = await this.frame.move_to(remains_ms);
     }
@@ -224,6 +173,7 @@ export class PinoV8Proxy {
     if (!frame_rects.view.intersects(element_rects.view_with_padding)) {
       let rect_before_scroll = new Rect();
       let tries = 0;
+      remains_ms = start_time + timeout_ms - new Date().getTime();
       while (
         !frame_rects.view.intersects(element_rects.view_with_padding) &&
         tries < SCROLL_MAX_TRIES &&
@@ -231,12 +181,13 @@ export class PinoV8Proxy {
       ) {
         rect_before_scroll = element_rects.full;
         frame_rects = await this.frame.get_rects();
-        remains_ms = timeout_ms - new Date().getTime() - start_time;
+        remains_ms = start_time + timeout_ms - new Date().getTime();
         await this.frame.scroll(element_rects.full.center.y - frame_rects.view.center.y, remains_ms);
         element_rects = await this.get_rects();
+        remains_ms = start_time + timeout_ms - new Date().getTime();
         if (rect_before_scroll.top === element_rects.full.top) {
           tries++;
-          remains_ms = timeout_ms - new Date().getTime() - start_time;
+          remains_ms = start_time + timeout_ms - new Date().getTime();
           await this.frame.move_to(remains_ms, new Point(
             Math.random() * frame_rects.view.width,
             Math.random() * frame_rects.view.height
@@ -254,6 +205,7 @@ export class PinoV8Proxy {
   async click(
     timeout_ms: number
   ) {
+    this.frame.check_is_valid();
     await this.move_to(timeout_ms);
     this.tab.click();
   }

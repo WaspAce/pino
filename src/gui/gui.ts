@@ -280,7 +280,6 @@ export class PinoGui {
     if (x !== this.cursor.x || y !== this.cursor.y) {
       this.cursor.x = x;
       this.cursor.y = y;
-      this.repaint();
     }
   }
 

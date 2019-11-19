@@ -1,4 +1,4 @@
-import { PinoV8Value } from './v8_value/v8_value';
+import { PinoV8Value } from '../../subprocess/v8_bridge/v8_value/v8_value';
 
 export interface PinoV8GetPropertyOptions {
   parent_id: number;

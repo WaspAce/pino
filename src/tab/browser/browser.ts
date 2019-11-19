@@ -1,4 +1,4 @@
-import { IPC_V8_BRIDGE_MSG } from './../../v8_bridge/v8_bridge_message/v8_bridge_message';
+import { IPC_V8_BRIDGE_MSG } from '../v8_bridge/v8_bridge_message/v8_bridge_message';
 import { Pino } from './../../pino';
 import { PinoBrowserClient } from './browser_client/browser_client';
 import { PinoTab } from '../tab';

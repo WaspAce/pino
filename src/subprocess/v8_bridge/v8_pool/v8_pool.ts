@@ -1,5 +1,4 @@
-import { PinoV8context } from './../v8_context/v8_context';
-
+import { PinoV8context } from '../v8_context/v8_context';
 export const V8POOl_NAME = 'v8_pool';
 
 export class PinoV8Pool {

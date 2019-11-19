@@ -17,7 +17,7 @@ class Test {
       this.app,
       true
     );
-    this.pino.is_mobile = true;
+    this.pino.is_mobile = false;
   }
 
   async go() {
@@ -40,15 +40,14 @@ class Test {
     this.divs = await this.tab.find_elements('div[class*="element"]');
     for (const div of this.divs) {
       console.log('move to: ', await div.className);
-      await div.move_to(10);
-      console.log('moved to: ', await div.className);
+      await div.move_to(10000);
     }
   }
 }
 
 const test = new Test();
 test.go().catch(reason => {
-  console.log(reason);
+  console.log('TASK ERROR: ', reason.message);
 });
 
 export default test;
