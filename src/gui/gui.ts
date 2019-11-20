@@ -8,8 +8,8 @@ export class PinoGui {
   view_image: Image;
 
   private form: GuiForm;
-  private cursor = new Image();
   private additional_images: Image[] = [];
+  private cursor_point = new Point();
 
   private on_tab_added: (value?: number) => void;
   private on_form_ready: () => void;
@@ -242,11 +242,7 @@ export class PinoGui {
 
   constructor(
     private readonly pino: Pino
-  ) {
-    this.cursor.load_from_file('assets://img/cursor.png');
-    this.cursor.x = 0;
-    this.cursor.y = 0;
-  }
+  ) {}
 
   async init() {
     await this.create_form();
@@ -266,7 +262,10 @@ export class PinoGui {
   }
 
   repaint() {
-    this.view.paint([this.view_image].concat(this.additional_images).concat(this.cursor));
+    // this.view_image.beginPath();
+    // this.view_image.arc(this.cursor_point.x, this.cursor_point.y, 5, 0, 2 * Math.PI);
+    // this.view_image.stroke();
+    this.view.paint([this.view_image].concat(this.additional_images));
   }
 
   browser_was_painted() {
@@ -277,10 +276,12 @@ export class PinoGui {
     x: number,
     y: number
   ) {
-    if (x !== this.cursor.x || y !== this.cursor.y) {
-      this.cursor.x = x;
-      this.cursor.y = y;
-    }
+    this.view_image.beginPath();
+    this.view_image.moveTo(this.cursor_point.x, this.cursor_point.y);
+    this.view_image.lineTo(x, y);
+    this.view_image.stroke();
+    this.cursor_point.x = x;
+    this.cursor_point.y = y;
   }
 
   add_image(

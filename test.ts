@@ -11,8 +11,8 @@ class Test {
 
   constructor() {
     this.app = new PinoApp();
-    this.app.app_loop_interval_ms = 100;
-    this.app.gui_loop_interval_ms = 10;
+    this.app.app_loop_interval_ms = 1;
+    this.app.gui_loop_interval_ms = 1;
     this.pino = new Pino(
       this.app,
       true
