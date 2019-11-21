@@ -5,12 +5,13 @@ export class PinoGui {
 
   view: GuiPanel;
   tabs: GuiTabs;
-  view_image: Image;
+  view_image = new Image();
 
   private form: GuiForm;
-  private additional_images: Image[] = [];
   private cursor_point = new Point();
-
+  private cursor_image = new Image();
+  private cursor_clear_time = 0;
+  
   private on_tab_added: (value?: number) => void;
   private on_form_ready: () => void;
   private on_tabs_ready: () => void;
@@ -89,6 +90,9 @@ export class PinoGui {
   ) {
     this.view_image.width = this.view.rect.width;
     this.view_image.height = this.view.rect.height;
+    this.cursor_image.width = this.view.rect.width;
+    this.cursor_image.height = this.view.rect.height;
+    this.cursor_image.clear();
     this.pino.view_resized();
   }
 
@@ -236,7 +240,6 @@ export class PinoGui {
       if (!this.pino.app.screen.is_default) {
         this.view.rect.copy_from(this.screen.view_rect);
       }
-      this.view_image = new Image();
     });
   }
 
@@ -262,10 +265,18 @@ export class PinoGui {
   }
 
   repaint() {
-    // this.view_image.beginPath();
-    // this.view_image.arc(this.cursor_point.x, this.cursor_point.y, 5, 0, 2 * Math.PI);
-    // this.view_image.stroke();
-    this.view.paint([this.view_image].concat(this.additional_images));
+    this.view_image.beginPath();
+    if (this.pino.is_mobile) {
+      this.view_image.arc(this.cursor_point.x, this.cursor_point.y, 8, 0, 2 * Math.PI);
+      this.view_image.setFillStyle('red');
+    } else {
+      this.view_image.arc(this.cursor_point.x, this.cursor_point.y, 4, 0, 2 * Math.PI);
+      this.view_image.setFillStyle('blue');
+    }
+    this.view_image.fill();
+    this.view_image.closePath();
+    this.view_image.stroke();
+    this.view.paint([this.view_image, this.cursor_image]);
   }
 
   browser_was_painted() {
@@ -276,21 +287,26 @@ export class PinoGui {
     x: number,
     y: number
   ) {
-    this.view_image.beginPath();
-    this.view_image.moveTo(this.cursor_point.x, this.cursor_point.y);
-    this.view_image.lineTo(x, y);
-    this.view_image.stroke();
+    const current_time = new Date().getTime();
+    if (current_time - this.cursor_clear_time > 3000) {
+      this.cursor_image.clear();
+      this.cursor_clear_time = current_time;
+    }
+    this.cursor_image.beginPath();
+    if (this.pino.is_mobile) {
+      this.view_image.arc(x, y, 8, 0, 2 * Math.PI);
+      this.view_image.setFillStyle('#EB7979');
+      this.view_image.fill();
+    } else {
+      this.cursor_image.moveTo(this.cursor_point.x, this.cursor_point.y);
+      this.cursor_image.lineWidth = 2;
+      this.cursor_image.setStrokeStyle('blue');
+      this.cursor_image.lineTo(x, y);
+    }
+    this.view_image.closePath();
+    this.cursor_image.stroke();
     this.cursor_point.x = x;
     this.cursor_point.y = y;
-  }
-
-  add_image(
-    image: Image
-  ) {
-    if (this.additional_images.indexOf(image) === -1) {
-      this.additional_images.push(image);
-    }
-    this.repaint();
   }
 
   get screen(): PinoScreen {

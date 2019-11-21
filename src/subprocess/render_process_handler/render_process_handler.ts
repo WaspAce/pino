@@ -13,6 +13,7 @@ export class PinoSubprocessRenderProcessHandler {
   private load_handler: PinoSubprocessLoadHandler;
   private default_scripts = [
     loader.load_from_file('assets://jquery.min.js'),
+    loader.load_from_file('assets://uri.js'),
     loader.load_from_file('assets://utils.js')
   ];
 
