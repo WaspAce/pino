@@ -52,8 +52,6 @@ export function get_value_type(
   switch (typeof value) {
     case 'boolean':
       return PinoV8ValueType.BOOLEAN;
-    case 'bigint':
-      return PinoV8ValueType.INTEGER;
     case 'number':
       if (Number.isInteger(value)) {
         return PinoV8ValueType.INTEGER;

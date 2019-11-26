@@ -22,6 +22,8 @@ export class Pino {
   block_subframes = false;
   is_mobile = false;
   on_painted: RenderHandlerOnPainted;
+  on_before_resource_load: ResourceRequestHandlerOnBeforeResourceLoad;
+  on_get_response_filter: ResourceRequestHandlerOnGetResourceResponseFilter;
   active_tab: PinoTab;
 
   private tabs_by_gui_tab_index = new Map<number, PinoTab>();

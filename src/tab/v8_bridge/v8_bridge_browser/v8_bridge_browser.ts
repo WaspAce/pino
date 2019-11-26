@@ -5,6 +5,7 @@ import { PinoFrame } from '../../browser/frame/frame';
 import { PinoV8ValueType } from '../../../subprocess/v8_bridge/v8_value/v8_value_type';
 import { PinoV8Proxy } from '../v8_proxy/v8_proxy';
 import { PinoElementRects } from '../../../element_rects/element_rects';
+import { setTimeout } from '../../../timers/timers';
 
 let last_message_id = 0;
 const response_resolvers_by_id = new Map<number, PinoV8BridgeResponseResolver>();

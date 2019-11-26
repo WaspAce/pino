@@ -1,3 +1,5 @@
+import { setTimeout } from '../timers/timers';
+
 class Misc {
   async sleep(
     timeout_ms: number

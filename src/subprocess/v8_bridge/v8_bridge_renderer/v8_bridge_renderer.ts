@@ -204,7 +204,7 @@ export class PinoV8BridgeRenderer {
     extension: PinoV8Extension,
     message_id: number
   ): Promise<PinoV8BridgeMessage> {
-    return new Promise(resolve => {
+    return new Promise<PinoV8BridgeMessage>(resolve => {
       if (!this.context.is_valid) {
         resolve(this.get_invalid_context_response());
       }

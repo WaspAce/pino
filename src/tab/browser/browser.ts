@@ -4,6 +4,7 @@ import { PinoBrowserClient } from './browser_client/browser_client';
 import { PinoTab } from '../tab';
 import { URI } from '../../uri/uri';
 import { PinoFrame } from './frame/frame';
+import { clearTimeout, setTimeout } from '../../timers/timers';
 
 const URL_BLANK_PAGE = 'about:blank';
 
@@ -30,7 +31,7 @@ export class PinoBrowser {
       settings.frame_rate = this.pino.frame_rate;
       settings.web_security = false;
 
-      CEF_APP.create_browser(
+      CefApp.create_browser(
         window_info,
         this.client.native,
         URL_BLANK_PAGE,

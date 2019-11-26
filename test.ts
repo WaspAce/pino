@@ -1,4 +1,3 @@
-import { IPC_TRANSFER_DATA_FUN_NAME } from './src/subprocess/render_process_handler/v8_extension/v8_extension';
 import { PinoApp } from './src/app/app';
 import { Pino } from './src/pino';
 import { PinoTab } from './src/tab/tab';
@@ -7,7 +6,6 @@ class Test {
   private app: PinoApp;
   private pino: Pino;
   private tab: PinoTab;
-  private divs = [];
 
   constructor() {
     this.app = new PinoApp();
@@ -35,10 +33,10 @@ class Test {
     this.pino.screen_changed();
     this.tab = await this.pino.add_tab();
     console.log('tab added');
-    await this.tab.load('http://tests.wa/wa/iframes.html');
+    await this.tab.load('http://assets.wa/wa/iframes.html');
     console.log('loaded');
-    this.divs = await this.tab.find_elements('div[class*="element"]');
-    for (const div of this.divs) {
+    const divs = await this.tab.find_elements('div[class*="element"]');
+    for (const div of divs) {
       console.log('move to: ', await div.className);
       await div.move_to(10000);
     }

@@ -22,7 +22,7 @@ export class PinoApp {
   private define_subprocess_info() {
     const info = new ListValue();
     this.define_initial_scripts(info);
-    CEF_APP.subprocess_info = info;
+    CefApp.subprocess_info = info;
   }
 
   constructor(
@@ -31,12 +31,12 @@ export class PinoApp {
     if (!this.initial_scripts) {
       this.initial_scripts = [];
     }
-    CEF_APP.subprocess_source = './subprocess/subprocess.js';
+    CefApp.subprocess_source = './subprocess/subprocess.js';
     this.define_subprocess_info();
   }
 
   init() {
-    CEF_APP.init();
+    CefApp.init();
     if (!this.screen) {
       this.screen = new PinoScreen();
     }
@@ -46,7 +46,7 @@ export class PinoApp {
     scripts: string[]
   ) {
     if (scripts && scripts.length > 0) {
-      const initial_scripts = CEF_APP.subprocess_info.get_list(SP_INFO_INIT_SCRIPTS_INDEX);
+      const initial_scripts = CefApp.subprocess_info.get_list(SP_INFO_INIT_SCRIPTS_INDEX);
       const old_size = initial_scripts.size;
       initial_scripts.set_size(old_size + scripts.length);
       scripts.forEach((code, index) => {
@@ -56,13 +56,13 @@ export class PinoApp {
   }
 
   get app_loop_interval_ms(): number {
-    return CEF_APP.loop_interval_ms;
+    return CefApp.loop_interval_ms;
   }
 
   set app_loop_interval_ms(
     value: number
   ) {
-    CEF_APP.loop_interval_ms = value;
+    CefApp.loop_interval_ms = value;
   }
 
   get gui_loop_interval_ms(): number {
@@ -76,20 +76,20 @@ export class PinoApp {
   }
 
   get user_agent(): string {
-    return CEF_APP.settings.user_agent;
+    return CefApp.settings.user_agent;
   }
 
   set user_agent(
     value: string
   ) {
-    if (!CEF_APP.initialized) {
-      CEF_APP.settings.user_agent = value;
+    if (!CefApp.initialized) {
+      CefApp.settings.user_agent = value;
     } else {
-      throw new Error('Cannot set UserAgent after CEF_APP initialized');
+      throw new Error('Cannot set UserAgent after CefApp initialized');
     }
   }
 
   get initialized(): boolean {
-    return CEF_APP.initialized;
+    return CefApp.initialized;
   }
 }

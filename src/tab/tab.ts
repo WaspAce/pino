@@ -1,7 +1,8 @@
 import {
   DEFAULT_TYPE_SPEED,
   MIN_TYPE_INTERVAL_MS,
-  MOUSE_DEFAULT_MOVE_SPEED
+  MOUSE_DEFAULT_MOVE_SPEED,
+  MOUSE_INTERVAL_MS
 } from './../common';
 import { misc } from './../misc/misc';
 import { BezierPath } from './../bezier/bezier_path';
@@ -230,16 +231,19 @@ export class PinoTab {
         MOUSE_DEFAULT_MOVE_SPEED,
         true
       );
+      const event = new MouseEvent();
       for (const path_point of path.points) {
-        const event = new MouseEvent();
-        event.x = path_point.x;
-        event.y = path_point.y;
-        this.send_mouse_move_event(event, false);
-        const remainds_ms = new Date().getTime() - start_time - timeout_ms;
-        if (remainds_ms > MIN_TYPE_INTERVAL_MS * 2) {
-          await misc.sleep(MIN_TYPE_INTERVAL_MS + Math.random() * MIN_TYPE_INTERVAL_MS);
+        const remainds_ms = start_time + timeout_ms - new Date().getTime();
+        if (remainds_ms > MOUSE_INTERVAL_MS * 2) {
+          event.x = path_point.x;
+          event.y = path_point.y;
+          this.send_mouse_move_event(event, false);
+          await misc.sleep(MOUSE_INTERVAL_MS + Math.random() * MOUSE_INTERVAL_MS);
         }
       }
+      event.x = point.x;
+      event.y = point.y;
+      this.send_mouse_move_event(event, false);
     }
   }
 

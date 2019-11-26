@@ -71,12 +71,11 @@ export class PinoFrame {
         scroll_distance = Math.min(Math.abs(distance), this.pino.app.screen.view_rect.height - start_point.y - 20);
       }
       const scroll_count = Math.ceil(Math.abs(distance / scroll_distance));
-      start_point.x = with_padding.x + Math.random() * (with_padding.width - 20);
+      start_point.x = this.tab.last_mouse_point.x;
       for (let i = 0; i < scroll_count; i++) {
         if (i > 0) {
           await misc.sleep(10 * TOUCH_MAX_INTERVAL_MS);
         }
-        start_point.x = start_point.x + 10 - Math.random() * 20;
         end_point.y = start_point.y - direction * scroll_distance;
         end_point.x = start_point.x + 40 - Math.random() * 80;
         const path = new BezierPath(
@@ -123,6 +122,7 @@ export class PinoFrame {
         event.x = end_point.x;
         event.y = end_point.y;
         this.tab.send_touch_event(event);
+        start_point.x = end_point.x + 10 - Math.random() * 20;
       }
     }
   }

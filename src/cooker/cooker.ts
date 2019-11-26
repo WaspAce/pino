@@ -10,7 +10,7 @@ import { URI } from '../uri/uri';
 
 export class Cooker {
 
-  private manager = CEF_APP.get_global_cookie_manager();
+  private manager = CefApp.get_global_cookie_manager();
 
   private delete_cookies_callback: DeleteCookiesCallback;
   private on_cookies_delete_resolve: () => void;
@@ -32,8 +32,8 @@ export class Cooker {
   }
 
   constructor() {
-    if (!CEF_APP.initialized) {
-      throw new Error('CEF_APP MUST be initialized!');
+    if (!CefApp.initialized) {
+      throw new Error('CefApp MUST be initialized!');
     }
     this.delete_cookies_callback = new DeleteCookiesCallback(this);
     this.delete_cookies_callback.on_complete = this.do_on_cookies_deleted;

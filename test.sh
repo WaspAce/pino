@@ -7,5 +7,7 @@ fi
 
 SOURCE="$PWD/dist/test.js"
 
+echo "SOURCE IS: $SOURCE"
+
 cd $ALEPATH
 ./ale --source=$SOURCE --unmute --chrome_debugging_port=10000 $ALESWITCHES

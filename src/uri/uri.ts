@@ -81,8 +81,8 @@ export class URI {
     let result = '';
     if (without_credentials.indexOf(DELIM_PATH) > -1) {
       const splitted = without_credentials.split(DELIM_PATH);
-      domain = splitted[0];
-      result = splitted[1];
+      domain = splitted.shift();
+      result = splitted.join(DELIM_PATH);
     } else {
       domain = without_credentials;
     }
