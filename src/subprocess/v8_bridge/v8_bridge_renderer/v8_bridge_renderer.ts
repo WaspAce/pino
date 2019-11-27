@@ -418,7 +418,6 @@ export class PinoV8BridgeRenderer {
     bridge_message: PinoV8BridgeMessage,
     extension: PinoV8Extension
   ) {
-    const start_time = new Date().getTime();
     let response: PinoV8BridgeMessage;
     switch (bridge_message.action) {
       case V8BridgeAction.BROWSER_EXECUTE_CODE:
