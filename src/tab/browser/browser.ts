@@ -1,3 +1,4 @@
+import { PinoV8BridgeMessage } from './../v8_bridge/v8_bridge_message/v8_bridge_message';
 import { IPC_V8_BRIDGE_MSG } from '../v8_bridge/v8_bridge_message/v8_bridge_message';
 import { Pino } from './../../pino';
 import { PinoBrowserClient } from './browser_client/browser_client';
@@ -131,12 +132,13 @@ export class PinoBrowser {
   }
 
   private process_frame_message(
+    frame_id: number,
     message: ProcessMessage,
-    frame: Frame
   ) {
     this.update_frames();
-    if (this.frames_by_id.has(frame.identifier)) {
-      this.frames_by_id.get(frame.identifier).receive_ipc_message(message);
+    if (this.frames_by_id.has(frame_id)) {
+      const bridge_message = new PinoV8BridgeMessage(message);
+      this.frames_by_id.get(frame_id).receive_ipc_message(bridge_message);
     }
   }
 
@@ -237,11 +239,11 @@ export class PinoBrowser {
   }
 
   process_message_received(
-    message: ProcessMessage,
-    frame: Frame
+    frame_id: number,
+    message: ProcessMessage
   ) {
     if (message.name === IPC_V8_BRIDGE_MSG) {
-      this.process_frame_message(message, frame);
+      this.process_frame_message(frame_id, message);
     }
   }
 

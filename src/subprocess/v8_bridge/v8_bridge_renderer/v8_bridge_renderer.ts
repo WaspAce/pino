@@ -1,7 +1,8 @@
-import { IPinoElementRects, PinoElementRects } from '../../../element_rects/element_rects';
+import { PinoSubprocess } from './../../subprocess';
+import { PinoElementRects } from '../../../element_rects/element_rects';
 import { PinoV8GetPropertyOptions, PinoV8SetPropertyOptions, PinoV8CallMethodOptions } from '../../../tab/v8_bridge/v8_payload_types';
 import { PinoV8Exception } from '../v8_exception';
-import { PinoV8context } from '../v8_context/v8_context';
+import { PinoV8Context } from '../v8_context/v8_context';
 import { PinoV8Pool, V8POOl_NAME } from '../v8_pool/v8_pool';
 import { PinoV8BridgeMessage, V8BridgeAction } from '../../../tab/v8_bridge/v8_bridge_message/v8_bridge_message';
 import { get_v8_value_type, PinoV8ValueType } from '../v8_value/v8_value_type';
@@ -10,7 +11,7 @@ import { PinoV8Extension } from '../../render_process_handler/v8_extension/v8_ex
 
 export class PinoV8BridgeRenderer {
 
-  private context: PinoV8context;
+  private context: PinoV8Context;
   private pool: PinoV8Pool;
 
   private get_invalid_context_response(): PinoV8BridgeMessage {
@@ -229,14 +230,14 @@ export class PinoV8BridgeRenderer {
     let eval_result: V8ContextEvalResult;
     let result: PinoV8BridgeMessage;
     if (frame.is_main) {
-      const context = new PinoV8context(frame.get_v8_context());
+      const context = new PinoV8Context(frame.get_v8_context(), this.subprocess);
       if (!context.is_valid) {
         return this.get_invalid_context_response();
       }
       eval_result = context.eval(`Reflect.get_window_size()`);
     } else {
       result = this.get_frame_rect(frame.get_parent(), rects);
-      const context = new PinoV8context(frame.get_parent().get_v8_context());
+      const context = new PinoV8Context(frame.get_parent().get_v8_context(), this.subprocess);
       if (!context.is_valid) {
         result = this.get_invalid_context_response();
       }
@@ -454,20 +455,18 @@ export class PinoV8BridgeRenderer {
   }
 
   constructor(
-    readonly frame: Frame
+    private readonly frame: Frame,
+    private readonly subprocess: PinoSubprocess,
+    bridge_message: PinoV8BridgeMessage,
+    private readonly extension: PinoV8Extension
   ) {
     if (!system.is_subprocess) {
       throw new Error('PinoV8BridgeRenderer MUST be created in renderer process');
     }
-    this.context = new PinoV8context(this.frame.get_v8_context());
-    this.pool = new PinoV8Pool(this.context);
-  }
-
-  receive_message(
-    message: ProcessMessage,
-    extension?: PinoV8Extension
-  ) {
-    const bridge_message = new PinoV8BridgeMessage(message);
-    this.process_message_from_browser(bridge_message, extension);
+    if (this.frame && this.frame.is_valid) {
+      this.context = new PinoV8Context(this.frame.get_v8_context(), this.subprocess);
+      this.pool = new PinoV8Pool(this.context);
+      this.process_message_from_browser(bridge_message, this.extension);
+    }
   }
 }

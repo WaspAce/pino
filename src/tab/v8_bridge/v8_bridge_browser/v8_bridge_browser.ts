@@ -51,9 +51,8 @@ export class PinoV8BridgeBrowser {
   }
 
   receive_message(
-    message: ProcessMessage,
+    bridge_message: PinoV8BridgeMessage
   ) {
-    const bridge_message = new PinoV8BridgeMessage(message);
     this.main_process_message_from_sub(bridge_message);
   }
 

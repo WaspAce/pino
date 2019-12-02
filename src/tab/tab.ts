@@ -1,3 +1,4 @@
+import { PinoFrame } from './browser/frame/frame';
 import {
   DEFAULT_TYPE_SPEED,
   MIN_TYPE_INTERVAL_MS,
@@ -30,6 +31,19 @@ export class PinoTab {
       this.on_initialized = undefined;
       resolve();
     }
+  }
+
+  private async get_frame_random_element(
+    frame: PinoFrame,
+    selector: string
+  ) {
+    return new Promise(resolve => {
+      frame.get_random_element(selector).then(value => {
+        resolve(value);
+      }).catch(reason => {
+        resolve(undefined);
+      });
+    });
   }
 
   constructor(
@@ -214,6 +228,21 @@ export class PinoTab {
       result.push(...arr);
     });
     return result;
+  }
+
+  async get_random_element(
+    selector: string
+  ): Promise<any[]> {
+    const result = [];
+    const promises = [];
+    for (const frame of this.browser.frames) {
+      promises.push(this.get_frame_random_element(frame, selector));
+    }
+    const elements = await Promise.all(promises);
+    const filtered = elements.filter(element => {
+      return !!(element);
+    });
+    return filtered[Math.floor(Math.random() * elements.length)];
   }
 
   async move_to(

@@ -1,3 +1,4 @@
+import { PinoV8BridgeMessage } from './../../tab/v8_bridge/v8_bridge_message/v8_bridge_message';
 import { PinoV8Extension } from './v8_extension/v8_extension';
 import { SP_INFO_INIT_SCRIPTS_INDEX } from './../../app/app';
 import { IPC_V8_BRIDGE_MSG } from '../../tab/v8_bridge/v8_bridge_message/v8_bridge_message';
@@ -44,8 +45,8 @@ export class PinoSubprocessRenderProcessHandler {
     message: ProcessMessage
   ): boolean {
     if (message.name === IPC_V8_BRIDGE_MSG) {
-      const bridge = new PinoV8BridgeRenderer(frame);
-      bridge.receive_message(message, this.extension);
+      const bridge_message = new PinoV8BridgeMessage(message);
+      const bridge = new PinoV8BridgeRenderer(frame, this.subprocess, bridge_message, this.extension);
     }
     return true;
   }

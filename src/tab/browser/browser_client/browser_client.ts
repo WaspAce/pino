@@ -57,7 +57,7 @@ export class PinoBrowserClient {
     if (message.name === IPC_PAGE_LOADED) {
       this.browser.subprocess_loaded();
     } else {
-      this.browser.process_message_received(message, frame);
+      this.browser.process_message_received(frame.identifier, message);
     }
   }
 

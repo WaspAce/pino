@@ -11,11 +11,15 @@ class Misc {
     });
   }
 
-   random_int(
+  random_int(
     min: number,
     max: number
   ): number {
     return Math.floor(Math.random() * (max - min + 1) + min);
+  }
+
+  random_string() {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
   }
 }
 

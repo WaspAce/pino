@@ -1,4 +1,4 @@
-import { PinoV8context } from '../v8_context/v8_context';
+import { PinoV8Context } from '../v8_context/v8_context';
 export const V8POOl_NAME = 'v8_pool';
 
 export class PinoV8Pool {
@@ -13,8 +13,10 @@ export class PinoV8Pool {
   }
 
   private define_pool_value() {
+    this.context.native.enter();
     const global = this.context.global;
-    if (global.has_value_by_key('Reflect')) {
+    this.context.native.exit();
+    if (global && global.has_value_by_key('Reflect')) {
       const reflect = global.get_value_by_key('Reflect');
       if (reflect.has_value_by_key(V8POOl_NAME)) {
         this.pool_value = reflect.get_value_by_key(V8POOl_NAME);
@@ -23,7 +25,7 @@ export class PinoV8Pool {
   }
 
   constructor(
-    private readonly context: PinoV8context
+    private readonly context: PinoV8Context
   ) {
     this.init_pool();
     this.define_pool_value();

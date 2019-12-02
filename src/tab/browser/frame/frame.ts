@@ -1,3 +1,4 @@
+import { PinoV8BridgeMessage } from './../../v8_bridge/v8_bridge_message/v8_bridge_message';
 import { misc } from './../../../misc/misc';
 import { BezierPath } from './../../../bezier/bezier_path';
 import {
@@ -194,11 +195,9 @@ export class PinoFrame {
   }
 
   receive_ipc_message(
-    message: ProcessMessage
+    message: PinoV8BridgeMessage
   ) {
-    if (message.name === IPC_V8_BRIDGE_MSG) {
-      this.bridge.receive_message(message);
-    }
+    this.bridge.receive_message(message);
   }
 
   async get_rects(): Promise<PinoElementRects> {
