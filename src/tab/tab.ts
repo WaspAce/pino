@@ -233,7 +233,7 @@ export class PinoTab {
   async get_random_element(
     selector: string
   ): Promise<any[]> {
-    const result = [];
+    let result;
     const promises = [];
     for (const frame of this.browser.frames) {
       promises.push(this.get_frame_random_element(frame, selector));
@@ -242,7 +242,8 @@ export class PinoTab {
     const filtered = elements.filter(element => {
       return !!(element);
     });
-    return filtered[Math.floor(Math.random() * elements.length)];
+    result = filtered[Math.floor(Math.random() * filtered.length)];
+    return result;
   }
 
   async move_to(

@@ -287,27 +287,27 @@ export class PinoGui {
     x: number,
     y: number
   ) {
-    const current_time = new Date().getTime();
-    if (current_time - this.cursor_clear_time > 10000) {
-      this.cursor_image.clear();
-      this.cursor_clear_time = current_time;
-    }
-    this.cursor_image.beginPath();
-    if (this.pino.is_mobile) {
-      this.view_image.arc(x, y, 8, 0, 2 * Math.PI);
-      this.view_image.setFillStyle('#EB7979');
-      this.view_image.fill();
-    } else {
-      this.cursor_image.moveTo(this.cursor_point.x, this.cursor_point.y);
-      this.cursor_image.lineWidth = 2;
-      this.cursor_image.setStrokeStyle('blue');
-      this.cursor_image.lineTo(x, y);
-    }
-    this.view_image.closePath();
-    this.cursor_image.stroke();
-    this.cursor_point.x = x;
-    this.cursor_point.y = y;
-    this.view.paint([this.cursor_image]);
+    // const current_time = new Date().getTime();
+    // if (current_time - this.cursor_clear_time > 10000) {
+    //   this.cursor_image.clear();
+    //   this.cursor_clear_time = current_time;
+    // }
+    // this.cursor_image.beginPath();
+    // if (this.pino.is_mobile) {
+    //   this.view_image.arc(x, y, 8, 0, 2 * Math.PI);
+    //   this.view_image.setFillStyle('#EB7979');
+    //   this.view_image.fill();
+    // } else {
+    //   this.cursor_image.moveTo(this.cursor_point.x, this.cursor_point.y);
+    //   this.cursor_image.lineWidth = 2;
+    //   this.cursor_image.setStrokeStyle('blue');
+    //   this.cursor_image.lineTo(x, y);
+    // }
+    // this.view_image.closePath();
+    // this.cursor_image.stroke();
+    // this.cursor_point.x = x;
+    // this.cursor_point.y = y;
+    // this.view.paint([this.cursor_image]);
   }
 
   get screen(): PinoScreen {

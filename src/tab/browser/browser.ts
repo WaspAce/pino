@@ -292,8 +292,13 @@ export class PinoBrowser {
       this.wait_subprocess_loaded(),
       this.wait_page_loaded()
     ];
-    if (timeout_ms && timeout_ms > 0) {
-      this.start_load_timer(timeout_ms);
+    if (timeout_ms) {
+      if (timeout_ms > 0) {
+        this.start_load_timer(timeout_ms);
+      } else {
+        this.page_loaded();
+        this.subprocess_loaded();
+      }
     }
     await Promise.all(promises);
   }
