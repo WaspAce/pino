@@ -214,7 +214,7 @@ export class PinoV8BridgeRenderer {
       });
       const eval_result = this.context.eval(`try{ ${code} } catch(e) {}`);
       if (eval_result.result) {
-        // 
+        //
       } else if (eval_result.exception) {
         resolve(this.get_exception_response(eval_result.exception));
       } else {
@@ -242,7 +242,8 @@ export class PinoV8BridgeRenderer {
         result = this.get_invalid_context_response();
       }
       eval_result = context.eval(`Reflect.get_child_frame_rect(
-        ${JSON.stringify(frame.url)}
+        ${JSON.stringify(frame.url)},
+        ${JSON.stringify(frame.name)}
       )`);
     }
     if (eval_result.exception) {

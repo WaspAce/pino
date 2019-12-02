@@ -1,3 +1,4 @@
+import { MAX_TIMEOUT_MS } from './../../../common';
 import { PinoElementRects } from '../../../element_rects/element_rects';
 import { PinoTab } from '../../tab';
 import { Pino } from '../../../pino';
@@ -131,8 +132,11 @@ export class PinoV8Proxy {
   }
 
   async move_to(
-    timeout_ms: number
+    timeout_ms?: number
   ): Promise<PinoElementRects> {
+    if (!timeout_ms || timeout_ms < 0) {
+      timeout_ms = MAX_TIMEOUT_MS;
+    }
     this.frame.check_is_valid();
     const start_time = new Date().getTime();
     let [frame_rects, element_rects] = await Promise.all([
@@ -153,6 +157,8 @@ export class PinoV8Proxy {
           rect.y + Math.random() * rect.height
         ), remains_ms);
       } else {
+        console.log('Frame rects: ', frame_rects);
+        console.log('Element rects: ', element_rects);
         throw new Error('Element is not in view');
       }
     }
@@ -160,8 +166,11 @@ export class PinoV8Proxy {
   }
 
   async scroll_to(
-    timeout_ms: number
+    timeout_ms?: number
   ): Promise<PinoElementRects> {
+    if (!timeout_ms) {
+      timeout_ms = MAX_TIMEOUT_MS;
+    }
     this.frame.check_is_valid();
     const start_time = new Date().getTime();
     let frame_rects = await this.frame.get_rects();

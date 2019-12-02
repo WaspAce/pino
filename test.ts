@@ -1,3 +1,4 @@
+import { misc } from './src/misc/misc';
 import { PinoApp } from './src/app/app';
 import { Pino } from './src/pino';
 import { PinoTab } from './src/tab/tab';

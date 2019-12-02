@@ -15,7 +15,6 @@ import { PinoElementRects } from './../../../element_rects/element_rects';
 import { PinoTab } from './../../tab';
 import { PinoBrowser } from './../browser';
 import { Pino } from './../../../pino';
-import { IPC_V8_BRIDGE_MSG } from '../../v8_bridge/v8_bridge_message/v8_bridge_message';
 import { PinoV8BridgeBrowser } from '../../v8_bridge/v8_bridge_browser/v8_bridge_browser';
 
 export class PinoFrame {
@@ -206,7 +205,7 @@ export class PinoFrame {
   }
 
   async move_to(
-    timeout_ms: number,
+    timeout_ms?: number,
     frame_point?: Point
   ): Promise<PinoElementRects> {
     this.check_is_valid();
@@ -239,7 +238,7 @@ export class PinoFrame {
   }
 
   async scroll_to(
-    timeout_ms: number
+    timeout_ms?: number
   ): Promise<PinoElementRects> {
     this.check_is_valid();
     if (!timeout_ms) {
@@ -290,9 +289,12 @@ export class PinoFrame {
 
   async scroll(
     distance: number,
-    timeout_ms: number
+    timeout_ms?: number
   ) {
     this.check_is_valid();
+    if (!timeout_ms) {
+      timeout_ms = MAX_TIMEOUT_MS;
+    }
     if (this.pino.is_mobile) {
       await this.scroll_touch(distance, timeout_ms);
     } else {
