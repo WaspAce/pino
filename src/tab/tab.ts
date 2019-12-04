@@ -232,7 +232,7 @@ export class PinoTab {
 
   async get_random_element(
     selector: string
-  ): Promise<any[]> {
+  ): Promise<any> {
     let result;
     const promises = [];
     for (const frame of this.browser.frames) {

@@ -1,3 +1,4 @@
+import { Pino } from './../../../../pino';
 import { PinoBrowserClient } from '../browser_client';
 
 export class PinoLifeSpanHandler {
@@ -25,10 +26,9 @@ export class PinoLifeSpanHandler {
     no_javascript_access: boolean,
     extra_info?: DictionaryValue
   } {
-    const tab = this.client.browser.tab.pino.add_tab_sync();
     return {
       allow: true,
-      client: tab.browser.client.native,
+      client: this.pino.active_tab.browser.client.native,
       no_javascript_access: false
     };
   }
@@ -43,5 +43,9 @@ export class PinoLifeSpanHandler {
     private readonly client: PinoBrowserClient
   ) {
     this.init_native();
+  }
+
+  get pino(): Pino {
+    return this.client.pino;
   }
 }
