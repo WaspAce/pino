@@ -47,15 +47,16 @@ export class PinoV8Context {
       tries = 0;
     }
     const global = this.global;
-    const has_document = this.has_document(global);
-    const initialized = (this.has_jquery(global) && this.was_initialized(global));
-    if (!initialized && has_document) {
-      this.subprocess.initial_scritps.forEach(script => {
-        this.eval(script);
-      });
-      this.eval(`Reflect.${INITIALIZED_MARKER} = true;`);
-      if (tries < 2) {
-        this.init_scripts(tries + 1);
+    if (this.has_document(global)) {
+      const initialized = (this.has_jquery(global) && this.was_initialized(global));
+      if (!initialized) {
+        this.subprocess.initial_scritps.forEach(script => {
+          this.eval(script);
+        });
+        this.eval(`Reflect.${INITIALIZED_MARKER} = true;`);
+        if (tries < 2) {
+          this.init_scripts(tries + 1);
+        }
       }
     }
   }
@@ -78,7 +79,10 @@ export class PinoV8Context {
   }
 
   get global(): V8Value {
-    const result = this.native.get_global();
+    let result: V8Value;
+    if (this.native && this.native.is_valid) {
+      result = this.native.get_global();
+    }
     return result;
   }
 }

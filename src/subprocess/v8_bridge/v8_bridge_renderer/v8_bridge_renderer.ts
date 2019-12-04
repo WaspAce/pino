@@ -145,25 +145,46 @@ export class PinoV8BridgeRenderer {
           v8_value = this.pool.get_value(property_value.pool_id);
           break;
         case PinoV8ValueType.BOOLEAN:
-          v8_value = this.context.native.create_bool(property_value.value);
+          if (this.context.native.enter()) {
+            v8_value = this.context.native.create_bool(property_value.value);
+            this.context.native.exit();
+          }
           break;
         case PinoV8ValueType.DOUBLE:
-          v8_value = this.context.native.create_double(property_value.value);
+          if (this.context.native.enter()) {
+            v8_value = this.context.native.create_double(property_value.value);
+            this.context.native.exit();
+          }
           break;
         case PinoV8ValueType.INTEGER:
-          v8_value = this.context.native.create_int(property_value.value);
+          if (this.context.native.enter()) {
+            v8_value = this.context.native.create_int(property_value.value);
+            this.context.native.exit();
+          }
           break;
         case PinoV8ValueType.STRING:
-          v8_value = this.context.native.create_string(property_value.value);
+          if (this.context.native.enter()) {
+            v8_value = this.context.native.create_string(property_value.value);
+            this.context.native.exit();
+          }
           break;
         case PinoV8ValueType.UINT:
-          v8_value = this.context.native.create_uint(property_value.value);
+          if (this.context.native.enter()) {
+            v8_value = this.context.native.create_uint(property_value.value);
+            this.context.native.exit();
+          }
           break;
         case PinoV8ValueType.NULL:
-          v8_value = this.context.native.create_null();
+          if (this.context.native.enter()) {
+            v8_value = this.context.native.create_null();
+            this.context.native.exit();
+          }
           break;
         default:
-          v8_value = this.context.native.create_undefined();
+          if (this.context.native.enter()) {
+            v8_value = this.context.native.create_undefined();
+            this.context.native.exit();
+          }
           break;
       }
       v8_obj.set_value_by_key(property_name, v8_value);
@@ -191,10 +212,16 @@ export class PinoV8BridgeRenderer {
           result = prop.execute_function(v8_obj);
           context.exit();
         } else {
-          result = this.context.native.create_undefined();
+          if (this.context.native.enter()) {
+            result = this.context.native.create_undefined();
+            this.context.native.exit();
+          }
         }
       } else {
-        result = this.context.native.create_undefined();
+        if (this.context.native.enter()) {
+          result = this.context.native.create_undefined();
+          this.context.native.exit();
+        }
       }
     }
     return this.get_value_response(result, message_id);
@@ -419,15 +446,15 @@ export class PinoV8BridgeRenderer {
   private async process_message_from_browser(
     bridge_message: PinoV8BridgeMessage,
     extension: PinoV8Extension
-  ) {
-    let response: PinoV8BridgeMessage;
+  ): Promise<PinoV8BridgeMessage> {
+    let result: PinoV8BridgeMessage;
     switch (bridge_message.action) {
       case V8BridgeAction.BROWSER_EXECUTE_CODE:
-        response = this.execute_code(bridge_message.payload, bridge_message.identifier);
+        result = this.execute_code(bridge_message.payload, bridge_message.identifier);
         break;
       case V8BridgeAction.BROWSER_GET_PROPERTY:
         const get_property_options: PinoV8GetPropertyOptions = JSON.parse(bridge_message.payload);
-        response = this.get_property(get_property_options.parent_id, get_property_options.property_name, bridge_message.identifier);
+        result = this.get_property(get_property_options.parent_id, get_property_options.property_name, bridge_message.identifier);
         break;
       case V8BridgeAction.BROWSER_SET_PROPERTY:
         const set_property_options: PinoV8SetPropertyOptions = JSON.parse(bridge_message.payload);
@@ -435,23 +462,30 @@ export class PinoV8BridgeRenderer {
         break;
       case V8BridgeAction.BROWSER_CALL_METHOD:
         const call_method_options: PinoV8CallMethodOptions = JSON.parse(bridge_message.payload);
-        response = this.call_method(call_method_options.parent_id, call_method_options.method_name, bridge_message.identifier);
+        result = this.call_method(call_method_options.parent_id, call_method_options.method_name, bridge_message.identifier);
         break;
       case V8BridgeAction.BROWSER_EVAL_AND_WAIT_DATA:
-        response = await this.eval_code_and_wait_data(bridge_message.payload, extension, bridge_message.identifier);
+        result = await this.eval_code_and_wait_data(bridge_message.payload, extension, bridge_message.identifier);
         break;
       case V8BridgeAction.BROWSER_GET_FRAME_RECTS:
-        response = await this.process_get_frame_rects(bridge_message);
+        result = await this.process_get_frame_rects(bridge_message);
         break;
       case V8BridgeAction.BROWSER_GET_ELEMENT_RECTS:
-        response = await this.process_get_element_rects(bridge_message);
+        result = await this.process_get_element_rects(bridge_message);
         break;
       default:
         break;
     }
-    if (response) {
-      response.identifier = bridge_message.identifier;
-      this.frame.send_process_message(ProcessId.PID_BROWSER, response.native);
+    return result;
+  }
+
+  private send_response(
+    message: PinoV8BridgeMessage,
+    id: number
+  ) {
+    if (message) {
+      message.identifier = id;
+      this.frame.send_process_message(ProcessId.PID_BROWSER, message.native);
     }
   }
 
@@ -465,9 +499,16 @@ export class PinoV8BridgeRenderer {
       throw new Error('PinoV8BridgeRenderer MUST be created in renderer process');
     }
     if (this.frame && this.frame.is_valid) {
-      this.context = new PinoV8Context(this.frame.get_v8_context(), this.subprocess);
-      this.pool = new PinoV8Pool(this.context);
-      this.process_message_from_browser(bridge_message, this.extension);
+      const context = this.frame.get_v8_context();
+      if (context.is_valid) {
+        this.context = new PinoV8Context(context, this.subprocess);
+        this.pool = new PinoV8Pool(this.context);
+        this.process_message_from_browser(bridge_message, this.extension).then(response => {
+          this.send_response(response, bridge_message.identifier);
+        });
+      } else {
+        this.send_response(this.get_invalid_context_response(), bridge_message.identifier);
+      }
     }
   }
 }

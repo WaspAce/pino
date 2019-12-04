@@ -13,9 +13,7 @@ export class PinoV8Pool {
   }
 
   private define_pool_value() {
-    this.context.native.enter();
     const global = this.context.global;
-    this.context.native.exit();
     if (global && global.has_value_by_key('Reflect')) {
       const reflect = global.get_value_by_key('Reflect');
       if (reflect.has_value_by_key(V8POOl_NAME)) {
@@ -41,10 +39,15 @@ export class PinoV8Pool {
   get_value(
     identifier: number
   ): V8Value {
+    let result: V8Value;
     if (this.pool_value.has_value_by_index(identifier)) {
-      return this.pool_value.get_value_by_index(identifier);
+      result = this.pool_value.get_value_by_index(identifier);
     } else {
-      return this.context.native.create_undefined();
+      if (this.context.native.enter()) {
+        result = this.context.native.create_undefined();
+        this.context.native.exit();
+      }
     }
+    return result;
   }
 }

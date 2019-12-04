@@ -157,8 +157,6 @@ export class PinoV8Proxy {
           rect.y + Math.random() * rect.height
         ), remains_ms);
       } else {
-        console.log('Frame rects: ', frame_rects);
-        console.log('Element rects: ', element_rects);
         throw new Error('Element is not in view');
       }
     }
