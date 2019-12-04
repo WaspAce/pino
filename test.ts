@@ -33,18 +33,13 @@ class Test {
     this.pino.screen_changed();
     const tab = await this.pino.add_tab();
     console.log('tab added');
-    // await this.tab.load('http://assets.wa/wa/iframes.html');
-    // console.log('loaded');
-    // const divs = await this.tab.find_elements('div[class*="element"]');
-    // for (const div of divs) {
-    //   console.log('move to: ', await div.className);
-    //   await div.move_to(10000);
-    // }
-
-    await tab.load('https://yandex.ru/search/?lr=41&text=северный поток 2');
-    const link = await tab.get_random_element('[href*="ria.ru"]');
-    console.log(await link.href);
-    await link.click();
+    await tab.load('http://assets.wa/wa/iframes.html');
+    console.log('loaded');
+    const divs = await tab.find_elements('div[class*="element"]');
+    for (const div of divs) {
+      console.log('move to: ', await div.className);
+      await div.move_to(10000);
+    }
   }
 }
 
